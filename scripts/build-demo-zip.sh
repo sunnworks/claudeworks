@@ -5,15 +5,18 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 OUT="${1:-dist}"
-NAME="수어복약지도데모"
+# ZIP 안의 이름은 전부 영문으로 둔다. 한글 파일명은 ZIP 규격상 인코딩 표시가
+# 함께 저장되지 않으면 Windows 탐색기에서 깨져 압축이 제대로 풀리지 않는다.
+NAME="KSL-sign-pharmacy-demo"
 rm -rf "$OUT/$NAME" "$OUT/$NAME.zip"
 mkdir -p "$OUT/$NAME"
 
 cp demo/index.html "$OUT/$NAME/index.html"
-cp demo/먼저읽어주세요.txt "$OUT/$NAME/먼저읽어주세요.txt"
-cp demo/사용설명서.pdf "$OUT/$NAME/사용설명서.pdf"
+cp demo/HOW-TO-START.txt "$OUT/$NAME/HOW-TO-START.txt"
+cp demo/USER-MANUAL.pdf "$OUT/$NAME/USER-MANUAL.pdf"
 cp -r public/avatar-samples "$OUT/$NAME/avatar-samples"
 cp -r public/samples "$OUT/$NAME/samples"
 
+# 이름에 한글이 없으므로 어떤 압축 프로그램에서도 그대로 풀린다
 (cd "$OUT" && zip -qr "$NAME.zip" "$NAME")
 echo "생성: $OUT/$NAME.zip"

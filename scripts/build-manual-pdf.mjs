@@ -7,7 +7,7 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 
 const html = resolve('demo/manual/사용설명서.html');
-const out = resolve(process.argv[2] ?? 'demo/사용설명서.pdf');
+const out = resolve(process.argv[2] ?? 'demo/USER-MANUAL.pdf');
 
 // 이 환경에는 Chromium이 /opt/pw-browsers 에 미리 설치되어 있다.
 const preinstalled = '/opt/pw-browsers/chromium';
