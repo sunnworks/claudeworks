@@ -1693,7 +1693,7 @@ function viewComplete() {
 function viewPatient() {
   const s = S.session;
   const approved = !!s.approval;
-  const back = `<button class="chip dim" data-act="hide-patient">약사 화면으로</button>`;
+  const back = `<button class="chip dim" data-act="hide-patient"><span aria-hidden="true">✕</span> 방문자 화면 닫기</button>`;
   const fast = s.approval && s.approval.demoFast
     ? '<span class="chip warn"><span aria-hidden="true">!</span>시연용 빠른 진행 · 확인 단계 생략</span>' : '';
   const top = `<div class="pt-top"><span class="chip dim"><span aria-hidden="true">🤟</span>수어 복약안내</span><span class="chip warn"><span aria-hidden="true">⚠</span>시연용 예시</span>${fast}<span class="spacer"></span>${back}</div>`;
@@ -1836,7 +1836,7 @@ function viewPrint() {
       <p style="margin:0;color:var(--ink-soft);font-size:14px">A4 용지에 100퍼센트 크기로 인쇄해 카운터에 놓고 직접 촬영해 보실 수 있습니다. 스캔 화면에서 함께 보여줄 약봉투 예시를 먼저 골라 주세요.</p>
       <div class="tabs">
         <button class="btn" data-act="print">인쇄하기</button>
-        <button class="btn ghost" data-act="route" data-route="dashboard">약사 화면으로</button>
+        <button class="btn ghost" data-act="route" data-route="dashboard">처음 화면으로</button>
       </div>
       <div class="notice warn"><span aria-hidden="true">⚠</span><span>인쇄물은 시연용 예시 약봉투입니다. 실제 의약품이나 처방이 아닙니다.</span></div>
     </div>
