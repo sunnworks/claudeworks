@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="시연용 약봉투">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f4f6fa"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="#dde3ec"/>
+  <g font-family="system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">
+    <rect x="24" y="16" width="752" height="568" rx="14" fill="url(#paper)" stroke="#c3ccda" stroke-width="2"/>
+    <text x="64" y="58" font-size="30" font-weight="800" fill="#0d5bd4">서울 열린약국</text>
+    <line x1="64" y1="74" x2="736" y2="74" stroke="#d8dfea" stroke-width="2"/>
+    <text x="64" y="118" font-size="24" fill="#344054">환자  김OO</text>
+    <text x="64" y="152" font-size="22" fill="#667085">조제일 2026년 9월 21일</text>
+    <line x1="64" y1="168" x2="736" y2="168" stroke="#eaeef4" stroke-width="2"/>
+  <text x="64" y="196" font-size="27" font-weight="700" fill="#101828">시연용 D정</text>
+    <rect x="56" y="278" width="688" height="72" rx="8" fill="#eef3fb"/>
+    <text x="70" y="308" font-size="20" fill="#667085">1회 복용량</text>
+    <text x="70" y="338" font-size="30" font-weight="800" fill="#101828">1회 1정</text>
+    <text x="420" y="308" font-size="20" fill="#667085">1일 복용횟수</text>
+    <text x="420" y="338" font-size="30" font-weight="800" fill="#101828">증상 있을 때</text>
+    <rect x="56" y="338" width="688" height="74" rx="8" fill="#f7f9fc"/>
+    <text x="70" y="368" font-size="20" fill="#667085">복용기간</text>
+    <text x="70" y="400" font-size="30" font-weight="800" fill="#101828">-</text>
+    <text x="420" y="368" font-size="20" fill="#667085">복용시점</text>
+    <text x="420" y="400" font-size="30" font-weight="800" fill="#101828">필요할 때</text>
+    <text x="64" y="466" font-size="24" font-weight="700" fill="#b42318">주의  최소 4시간 간격을 두고 복용</text>
+    <line x1="64" y1="492" x2="736" y2="492" stroke="#eaeef4" stroke-width="2"/>
+    <text x="64" y="528" font-size="19" fill="#98a2b3">※ 시연용 가상 약봉투입니다. 실제 의약품이나 처방이 아닙니다.</text>
+    <text x="64" y="556" font-size="19" fill="#98a2b3">대한약사회 공용플랫폼 수어 복약지도 데모</text>
+  <rect x="560" y="28" width="200" height="44" rx="10" fill="#0d5bd4"/>
+  <text x="660" y="57" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">필요시약</text>
+  </g>
+</svg>
