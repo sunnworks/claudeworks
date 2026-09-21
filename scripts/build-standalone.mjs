@@ -13,6 +13,7 @@ const src = resolve('demo/index.html');
 const out = resolve(process.argv[2] ?? 'dist/index.html');
 
 const MEDIA = [
+  ...[1, 2, 3, 4, 5].map((n) => ({ path: `avatar-samples/sign-${n}.webm`, from: `public/avatar-samples/sign-${n}.webm`, type: 'video/webm' })),
   ...[1, 2, 3, 4, 5].map((n) => ({ path: `avatar-samples/sign-${n}.mp4`, from: `public/avatar-samples/sign-${n}.mp4`, type: 'video/mp4' })),
   ...['regular', 'asneeded', 'blur', 'glare', 'table', 'handwritten'].map((n) => ({
     path: `samples/bag-${n}.svg`, from: `public/samples/bag-${n}.svg`, type: 'image/svg+xml',

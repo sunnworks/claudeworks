@@ -69,6 +69,9 @@
     --danger-soft: #3a1d1c;
   }
 
+  /* .ptload 처럼 display 를 지정한 요소는 hidden 속성만으로 숨겨지지 않는다.
+     (작성자 스타일이 브라우저 기본 [hidden] 규칙을 이긴다) */
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body {
     margin: 0;
@@ -649,12 +652,15 @@ const CAUTION_LIBRARY = [
 
 /* 데모용 샘플 수어영상 — 실제 안내 내용과 일치하지 않는다 */
 const CLIPS = [
-  { url: 'avatar-samples/sign-1.mp4', ms: 10230 },
-  { url: 'avatar-samples/sign-2.mp4', ms: 9500 },
-  { url: 'avatar-samples/sign-3.mp4', ms: 8170 },
-  { url: 'avatar-samples/sign-4.mp4', ms: 9800 },
-  { url: 'avatar-samples/sign-5.mp4', ms: 10670 },
+  { url: 'avatar-samples/sign-1.mp4', webm: 'avatar-samples/sign-1.webm', ms: 10230 },
+  { url: 'avatar-samples/sign-2.mp4', webm: 'avatar-samples/sign-2.webm', ms: 9500 },
+  { url: 'avatar-samples/sign-3.mp4', webm: 'avatar-samples/sign-3.webm', ms: 8170 },
+  { url: 'avatar-samples/sign-4.mp4', webm: 'avatar-samples/sign-4.webm', ms: 9800 },
+  { url: 'avatar-samples/sign-5.mp4', webm: 'avatar-samples/sign-5.webm', ms: 10670 },
 ];
+/* mp4 주소 -> webm 대체본 주소. 기기가 여는 쪽을 브라우저가 고른다 */
+const ALT_WEBM = {};
+CLIPS.forEach((c) => { if (c.webm) ALT_WEBM[c.url] = c.webm; });
 /* 영상이 시작될 때 멈춘 것처럼 보이지 않도록, 샘플 영상 5개를 미리 받아 두고
    같은 <video> 요소를 계속 재사용한다. 화면을 다시 그릴 때 요소가 사라지지 않게
    따로 보관해 두었다가 다시 붙인다. */
@@ -691,10 +697,25 @@ function videoFor(url) {
     const v = document.createElement('video');
     v.muted = true; v.defaultMuted = true; v.playsInline = true;
     v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
-    v.preload = 'auto'; v.src = playableUrl(url);
-    v.addEventListener('error', () => {
-      if (S.player && !S.player.broken) { S.player.broken = true; render(); }
+    v.preload = 'auto';
+
+    /* 기기에 따라 여는 형식이 달라 두 가지를 함께 넣어 둔다.
+       WebM(VP9)은 안드로이드에서, mp4(H.264)는 아이패드·PC에서 확실히 열린다. */
+    const fallToPicture = () => { if (S.player && !S.player.broken) { S.player.broken = true; render(); } };
+    const sources = [];
+    if (ALT_WEBM[url]) sources.push([ALT_WEBM[url], 'video/webm']);
+    sources.push([url, 'video/mp4']);
+    let failed = 0;
+    sources.forEach(([u, type]) => {
+      const el = document.createElement('source');
+      el.src = playableUrl(u);
+      el.type = type;
+      /* <source> 가 모두 실패하면 video 요소는 error 를 내지 않으므로 직접 센다 */
+      el.addEventListener('error', () => { failed += 1; if (failed >= sources.length) fallToPicture(); });
+      v.appendChild(el);
     });
+    v.addEventListener('error', fallToPicture);
+
     warmHolder().appendChild(v);
     try { v.load(); } catch (_) {}
     VEL[url] = v;
