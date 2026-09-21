@@ -11,10 +11,12 @@ NAME="KSL-sign-pharmacy-demo"
 rm -rf "$OUT/$NAME" "$OUT/$NAME.zip"
 mkdir -p "$OUT/$NAME"
 
-cp demo/index.html "$OUT/$NAME/index.html"
+# 수어영상과 약봉투 이미지를 index.html 안에 심어 외부 파일 없이 동작하게 한다.
+# 휴대전화·태블릿에서 파일 관리자로 열면 같은 폴더의 mp4를 못 찾는 경우가 있다.
+node scripts/build-standalone.mjs "$OUT/$NAME/index.html"
 cp demo/HOW-TO-START.txt "$OUT/$NAME/HOW-TO-START.txt"
 cp demo/USER-MANUAL.pdf "$OUT/$NAME/USER-MANUAL.pdf"
-cp -r public/avatar-samples "$OUT/$NAME/avatar-samples"
+# samples 는 약봉투 예시를 직접 인쇄하실 때 쓰는 원본이다 (앱 동작에는 필요 없다)
 cp -r public/samples "$OUT/$NAME/samples"
 
 # 이름에 한글이 없으므로 어떤 압축 프로그램에서도 그대로 풀린다

@@ -207,18 +207,18 @@
   <div class="folder">
     <div class="row"><span class="ic">📁</span><span><span class="nm">KSL-sign-pharmacy-demo</span></span></div>
     <div class="in">
-      <div class="row"><span class="ic">🌐</span><span><span class="nm">index.html</span> <span class="ds">← 이 파일을 두 번 누르면 실행됩니다</span></span></div>
+      <div class="row"><span class="ic">🌐</span><span><span class="nm">index.html</span> <span class="ds">← 이 파일을 두 번 누르면 실행됩니다 (수어영상·약봉투 이미지가 이 안에 들어 있습니다)</span></span></div>
       <div class="row"><span class="ic">📄</span><span><span class="nm">HOW-TO-START.txt</span> <span class="ds">— 시연 순서 요약 메모 (한글)</span></span></div>
       <div class="row"><span class="ic">📕</span><span><span class="nm">USER-MANUAL.pdf</span> <span class="ds">— 이 설명서</span></span></div>
-      <div class="row"><span class="ic">📁</span><span><span class="nm">avatar-samples</span> <span class="ds">— 수어영상 샘플 5개</span></span></div>
-      <div class="row"><span class="ic">📁</span><span><span class="nm">samples</span> <span class="ds">— 약봉투 예시 이미지 · 인쇄용 파일</span></span></div>
+      <div class="row"><span class="ic">📁</span><span><span class="nm">samples</span> <span class="ds">— 약봉투 예시를 직접 인쇄하실 때 쓰는 원본 (앱 동작에는 필요 없습니다)</span></span></div>
     </div>
   </div>
 
-  <div class="box">
-    <span class="t">index.html만 따로 옮기지 마세요</span>
-    <p>파일 이름을 영문으로 둔 것은 일부러입니다. 한글 파일명은 압축 파일 규격상 Windows에서 깨져 보일 수 있어, 어느 PC에서나 그대로 풀리도록 영문으로 통일했습니다.</p>
-    <p><code>index.html</code>은 같은 폴더에 있는 <code>avatar-samples</code>와 <code>samples</code> 폴더를 함께 사용합니다. 바탕화면에 <code>index.html</code>만 꺼내 두면 수어영상과 약봉투 이미지가 나오지 않습니다. <strong>폴더 전체를 통째로 보관하고 전달해 주세요.</strong></p>
+  <div class="box ok">
+    <span class="t">index.html 한 장이면 됩니다</span>
+    <p><strong>수어영상 5개와 약봉투 예시 이미지가 모두 <code>index.html</code> 안에 들어 있습니다.</strong> 그래서 이 파일 하나만 메신저로 보내거나 USB에 담아도 그대로 동작합니다. 인터넷도 필요하지 않습니다.</p>
+    <p><code>samples</code> 폴더는 약봉투 예시를 직접 인쇄하실 때 쓰는 원본이라, 앱을 쓰는 데는 없어도 됩니다.</p>
+    <p>파일 이름을 영문으로 둔 것도 일부러입니다. 한글 파일명은 압축 파일 규격상 Windows에서 깨져 보일 수 있어, 어느 PC에서나 그대로 풀리도록 영문으로 통일했습니다.</p>
   </div>
 
   <h3>실행하기</h3>
@@ -227,6 +227,11 @@
     <li>기본 브라우저로 화면이 열립니다.</li>
     <li>Internet Explorer로 열렸다면 <code>index.html</code>을 오른쪽 버튼으로 누르고 <span class="key">연결 프로그램</span> → <span class="key">Chrome</span> 또는 <span class="key">Edge</span>를 선택해 주세요.</li>
   </ol>
+
+  <div class="box">
+    <span class="t">휴대전화 · 태블릿에서 열기</span>
+    <p>파일을 기기에 옮긴 뒤 파일 관리자에서 <code>index.html</code>을 누르고 <span class="key">다른 앱으로 열기</span> → <span class="key">Chrome</span>을 선택합니다. 수어영상이 파일 안에 들어 있어 그대로 재생됩니다.</p>
+  </div>
 
   <div class="box">
     <span class="t">전체화면으로 시연하시면 더 좋습니다</span>
@@ -621,8 +626,8 @@
     <tr><th style="width:56mm">증상</th><th>해결 방법</th></tr>
     <tr><td>수어영상이 나오지 않고 그림 아바타가 나온다</td>
         <td>그 기기의 브라우저가 mp4를 재생할 수 없는 경우입니다. 자동으로 그림 아바타와 수어 순서 표시로 바뀌어 흐름은 그대로 진행됩니다. Chrome 또는 Edge로 열어 보세요.</td></tr>
-    <tr><td>약봉투 이미지나 수어영상이 안 보인다</td>
-        <td><code>index.html</code>만 따로 옮기지 않았는지 확인해 주세요. 같은 폴더에 <code>avatar-samples</code>와 <code>samples</code>가 있어야 합니다. ZIP 안에서 바로 열었을 때도 같은 증상이 납니다.</td></tr>
+    <tr><td>압축을 풀었는데 폴더 이름이 깨져 보이거나 비어 보인다</td>
+        <td>다른 압축 프로그램(반디집·알집·7-Zip)으로 풀어 보세요. 이 ZIP은 파일 이름을 모두 영문으로 두어 이 문제가 생기지 않지만, 예전 파일을 받으셨다면 다시 받아 주세요.</td></tr>
     <tr><td>카메라 켜기를 눌러도 카메라가 안 켜진다</td>
         <td>브라우저 보안 정책 때문입니다(6장 참고). <span class="key">휴대기기 카메라로 촬영</span> 또는 <span class="key">사진 불러오기</span>를 사용해 주세요.</td></tr>
     <tr><td>QR을 휴대전화로 찍어도 열리지 않는다</td>

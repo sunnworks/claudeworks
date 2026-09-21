@@ -4,6 +4,20 @@
 같은 폴더에 `avatar-samples/`(수어영상 샘플 5개)와 `samples/`(약봉투 예시 이미지)가 있어야
 영상과 약봉투가 표시됩니다.
 
+## 자체완결 index.html
+
+배포용 `index.html` 은 수어영상 5개와 약봉투 예시 이미지를 data URI로 품고 있어
+외부 파일이 필요 없다. 휴대전화·태블릿의 파일 관리자가 HTML을 `content://` 주소로
+띄우면 같은 폴더의 mp4를 찾지 못해 수어영상이 그림 아바타로 대체되는데, 매체를
+파일 안에 심어 두면 어떤 방식으로 열어도 그대로 재생된다.
+
+```bash
+node scripts/build-standalone.mjs dist/index.html   # 약 4.3MB
+```
+
+저장소의 `demo/index.html` 은 상대 경로를 쓰는 원본이고(Artifact 배포용),
+위 스크립트가 `public/avatar-samples` 와 `public/samples` 를 읽어 심는다.
+
 ## 파일 이름 규칙
 
 배포용 ZIP 안의 이름은 전부 영문으로 둔다. ZIP 규격은 파일명 인코딩을 헤더 플래그로만
