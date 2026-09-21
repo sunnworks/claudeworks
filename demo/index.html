@@ -659,6 +659,28 @@ const CLIPS = [
    같은 <video> 요소를 계속 재사용한다. 화면을 다시 그릴 때 요소가 사라지지 않게
    따로 보관해 두었다가 다시 붙인다. */
 const VEL = {};
+const BLOBS = {};
+
+/** data: 주소를 Blob 주소로 바꾼다. 휴대전화 브라우저가 큰 data: 영상을 열지 못해
+ *  계속 "불러오는 중"에 머무는 경우가 있어, 파일과 같은 방식으로 다뤄지게 한다. */
+function playableUrl(url) {
+  if (typeof url !== 'string' || url.slice(0, 5) !== 'data:') return url;
+  if (BLOBS[url]) return BLOBS[url];
+  try {
+    const comma = url.indexOf(',');
+    const head = url.slice(5, comma);
+    if (head.indexOf('base64') < 0) return url;
+    const type = head.split(';')[0] || 'video/mp4';
+    const bin = atob(url.slice(comma + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+    BLOBS[url] = URL.createObjectURL(new Blob([bytes], { type }));
+    return BLOBS[url];
+  } catch (_) {
+    return url;
+  }
+}
+
 function warmHolder() {
   let h = document.getElementById('vwarm');
   if (!h) { h = document.createElement('div'); h.id = 'vwarm'; h.setAttribute('aria-hidden', 'true'); document.body.appendChild(h); }
@@ -669,7 +691,7 @@ function videoFor(url) {
     const v = document.createElement('video');
     v.muted = true; v.defaultMuted = true; v.playsInline = true;
     v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
-    v.preload = 'auto'; v.src = url;
+    v.preload = 'auto'; v.src = playableUrl(url);
     v.addEventListener('error', () => {
       if (S.player && !S.player.broken) { S.player.broken = true; render(); }
     });
@@ -1871,6 +1893,8 @@ function startTimer() {
         p.stall = (p.stall || 0) + 120;
         if (p.playing) v.play().catch(() => {});
         paintLoading();
+        /* 이 기기에서 영상을 못 여는 경우 계속 기다리지 않고 그림 안내로 넘어간다 */
+        if (p.stall >= 6000) { p.broken = true; render(); return; }
         if (p.stall < 4000) { paintProgress(); return; }
       } else {
         p.stall = 0;
