@@ -395,3 +395,37 @@ describe('실제 표 양식 약봉투 (SAMPLE_BAG_5)', () => {
     expect(texts.filter((text) => text === '아침, 점심, 저녁 식사 후 30분에 드세요.')).toHaveLength(1);
   });
 });
+
+describe('손으로 적은 약봉투 (SAMPLE_BAG_6)', () => {
+  it('글자를 읽지 못하면 모든 필수값을 약사가 입력해야 한다', async () => {
+    let session = createSession();
+    session = await addSample(session, 'SAMPLE_BAG_6');
+
+    expect(session.status).toBe('NEEDS_REVIEW');
+    const missing = validateSession(session).filter((issue) => issue.code === 'MISSING_REQUIRED');
+    expect(missing.map((issue) => issue.field)).toEqual(
+      expect.arrayContaining(['doseAmount', 'frequencyPerDay', 'durationDays', 'timingCode']),
+    );
+    expect(session.bags[0]!.timingCandidates).toContain('AFTER_MEAL_30');
+  });
+
+  it('약사가 직접 입력하면 같은 방식으로 안내 문장이 만들어진다', async () => {
+    let session = createSession();
+    session = await addSample(session, 'SAMPLE_BAG_6');
+    const groupId = session.bags[0]!.groups[0]!.groupId;
+
+    session = updateMedications(session.sessionId, [
+      { groupId, field: 'doseAmount', value: 1 },
+      { groupId, field: 'doseUnit', value: '포' },
+      { groupId, field: 'frequencyPerDay', value: 3 },
+      { groupId, field: 'durationDays', value: 5 },
+      { groupId, field: 'timingCode', value: 'AFTER_MEAL_30' },
+    ]);
+    expect(blockingIssues(validateSession(session))).toHaveLength(0);
+
+    session = composeSession(session.sessionId);
+    const texts = session.cards.map((card) => card.displayText);
+    expect(texts).toContain('하루 3번, 한 번에 1포씩, 5일 동안 드세요.');
+    expect(texts).toContain('아침, 점심, 저녁 식사 후 30분에 드세요.');
+  });
+});

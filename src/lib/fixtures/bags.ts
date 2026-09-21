@@ -499,6 +499,73 @@ export const SAMPLE_BAGS: SampleBag[] = [
       },
     ],
   },
+  {
+    sampleId: 'SAMPLE_BAG_6',
+    label: '샘플 약봉투 6 · 손으로 적은 약봉투',
+    caseTag: '손글씨',
+    description: '글자를 거의 읽지 못해 약사가 직접 입력하는 경우',
+    imageRef: '/samples/bag-handwritten.svg',
+    asNeededBag: false,
+    // 손으로 적은 값은 판독하지 못하므로 복용시점 후보만 제시한다.
+    timingCandidates: ['AFTER_MEAL_30', 'AFTER_MEAL', 'BEFORE_MEAL_30', 'BEFORE_MEAL'],
+    imageQuality: {
+      status: 'REVIEW',
+      blur: 0.34,
+      glare: 0.08,
+      cropped: false,
+      rotationDeg: 2.1,
+      messages: ['손으로 적은 글자는 읽지 못했습니다. 복약정보를 직접 입력해 주세요'],
+    },
+    rawText:
+      '행복한약국\n' +
+      '성명 ___   조제일 ___\n' +
+      '1회 ___ 포(정)   1일 ___ 회\n' +
+      '총 ___ 일분   식후 · 식전 ___ 분\n' +
+      '주의사항 ___',
+    groups: [
+      {
+        medicineName: { value: null, confidence: 0, originalText: '', normalizedText: '', bbox: null },
+        doseAmount: {
+          value: null,
+          confidence: 0,
+          originalText: '',
+          normalizedText: '',
+          bbox: { x: 0.14, y: 0.355, w: 0.12, h: 0.062 },
+        },
+        doseUnit: {
+          value: null,
+          confidence: 0,
+          originalText: '',
+          normalizedText: '',
+          bbox: { x: 0.28, y: 0.355, w: 0.14, h: 0.062 },
+        },
+        frequencyPerDay: {
+          value: null,
+          confidence: 0,
+          originalText: '',
+          normalizedText: '',
+          bbox: { x: 0.53, y: 0.355, w: 0.12, h: 0.062 },
+        },
+        durationDays: {
+          value: null,
+          confidence: 0,
+          originalText: '',
+          normalizedText: '',
+          bbox: { x: 0.13, y: 0.45, w: 0.13, h: 0.062 },
+        },
+        timingCode: {
+          value: null,
+          confidence: 0,
+          originalText: '',
+          normalizedText: '',
+          bbox: { x: 0.47, y: 0.45, w: 0.33, h: 0.062 },
+        },
+        asNeeded: { value: false, confidence: 0.9, originalText: '', normalizedText: '상시 복용', bbox: null },
+        symptomText: null,
+        cautionIds: [],
+      },
+    ],
+  },
 ];
 
 export function findSampleBag(sampleId: string): SampleBag | undefined {

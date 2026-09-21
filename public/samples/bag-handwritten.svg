@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="시연용 손글씨 약봉투">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fffdf7"/>
+      <stop offset="60%" stop-color="#f6f2e8"/>
+      <stop offset="100%" stop-color="#eee9dc"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="0.6"/></filter>
+    <filter id="handblur"><feGaussianBlur stdDeviation="1.1"/></filter>
+  </defs>
+  <rect width="800" height="600" fill="#dcd8cc"/>
+  <g font-family="system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">
+    <rect x="24" y="16" width="752" height="568" rx="14" fill="url(#paper)" stroke="#c9c2af" stroke-width="2"/>
+
+    <text x="64" y="62" font-size="29" font-weight="800" fill="#2f6b4f">행복한약국</text>
+    <text x="736" y="62" font-size="18" fill="#8b8572" text-anchor="end">☎ 02-000-0000</text>
+    <line x1="64" y1="78" x2="736" y2="78" stroke="#ddd6c4" stroke-width="2"/>
+
+    <g filter="url(#soft)">
+      <text x="64" y="118" font-size="22" fill="#5d574a">성명</text>
+      <text x="64" y="156" font-size="20" fill="#8b8572">조제일</text>
+      <line x1="130" y1="124" x2="420" y2="124" stroke="#c9c2af" stroke-width="1.5"/>
+      <line x1="130" y1="162" x2="420" y2="162" stroke="#c9c2af" stroke-width="1.5"/>
+    </g>
+
+    <g font-family="'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive" filter="url(#handblur)" fill="#3b4a66">
+      <text x="146" y="120" font-size="27" transform="rotate(-2.2 146 120)">김○○</text>
+      <text x="146" y="158" font-size="24" transform="rotate(-1.4 146 158)">9/21</text>
+    </g>
+
+    <line x1="64" y1="182" x2="736" y2="182" stroke="#ddd6c4" stroke-width="2"/>
+
+    <g filter="url(#soft)" fill="#5d574a">
+      <text x="64" y="232" font-size="23">1회</text>
+      <text x="230" y="232" font-size="23">포(정)</text>
+      <text x="380" y="232" font-size="23">1일</text>
+      <text x="540" y="232" font-size="23">회</text>
+      <text x="64" y="288" font-size="23">총</text>
+      <text x="230" y="288" font-size="23">일분</text>
+      <text x="380" y="288" font-size="23">식후 · 식전</text>
+      <text x="640" y="288" font-size="23">분</text>
+      <line x1="120" y1="238" x2="215" y2="238" stroke="#c9c2af" stroke-width="1.5"/>
+      <line x1="430" y1="238" x2="525" y2="238" stroke="#c9c2af" stroke-width="1.5"/>
+      <line x1="110" y1="294" x2="215" y2="294" stroke="#c9c2af" stroke-width="1.5"/>
+      <line x1="545" y1="294" x2="625" y2="294" stroke="#c9c2af" stroke-width="1.5"/>
+    </g>
+
+    <g font-family="'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive" filter="url(#handblur)" fill="#3b4a66">
+      <text x="152" y="232" font-size="30" transform="rotate(-3 152 232)">1</text>
+      <text x="458" y="232" font-size="30" transform="rotate(2 458 232)">3</text>
+      <text x="142" y="290" font-size="30" transform="rotate(-2 142 290)">5</text>
+      <text x="566" y="290" font-size="30" transform="rotate(3 566 290)">30</text>
+      <text x="400" y="266" font-size="26" transform="rotate(-1.5 400 266)">○</text>
+    </g>
+
+    <line x1="64" y1="322" x2="736" y2="322" stroke="#ddd6c4" stroke-width="2"/>
+
+    <g filter="url(#soft)">
+      <text x="64" y="364" font-size="21" fill="#5d574a">주의사항</text>
+      <line x1="64" y1="404" x2="736" y2="404" stroke="#c9c2af" stroke-width="1.5"/>
+      <line x1="64" y1="446" x2="736" y2="446" stroke="#c9c2af" stroke-width="1.5"/>
+    </g>
+    <g font-family="'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive" filter="url(#handblur)" fill="#3b4a66">
+      <text x="200" y="398" font-size="25" transform="rotate(-1.2 200 398)">졸릴 수 있어요</text>
+      <text x="200" y="440" font-size="25" transform="rotate(0.8 200 440)">물 많이 드세요</text>
+    </g>
+
+    <line x1="64" y1="478" x2="736" y2="478" stroke="#ddd6c4" stroke-width="2"/>
+    <text x="64" y="512" font-size="18" fill="#a8a291">※ 시연용 예시 약봉투입니다. 실제 의약품이나 처방이 아닙니다.</text>
+    <text x="64" y="538" font-size="18" fill="#a8a291">손으로 적은 약봉투는 글자를 읽지 못할 수 있습니다.</text>
+  </g>
+</svg>
