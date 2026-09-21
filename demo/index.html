@@ -1,0 +1,2356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>수어 복약지도 데모</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --ink: #101a2e;
+    --ink-soft: #4b5a72;
+    --canvas: #eef2f8;
+    --surface: #ffffff;
+    --surface-2: #f6f8fc;
+    --line: #d5dde9;
+    --brand: #0d5bd4;
+    --brand-dark: #0a47a6;
+    --brand-soft: #e6eefc;
+    --ok: #0f7b4f;
+    --ok-soft: #e1f4ea;
+    --warn: #9a5600;
+    --warn-soft: #fdf0da;
+    --danger: #b42318;
+    --danger-soft: #fdecea;
+    --pt-bg: #0b1220;
+    --pt-panel: #16223a;
+    --pt-ink: #ffffff;
+
+    --font-ui: 'IBM Plex Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --r: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e8eef8;
+      --ink-soft: #9aa9c0;
+      --canvas: #0d1526;
+      --surface: #151f33;
+      --surface-2: #1b2740;
+      --line: #2b3a56;
+      --brand: #6aa4ff;
+      --brand-dark: #97c0ff;
+      --brand-soft: #1b2b48;
+      --ok: #5ed09b;
+      --ok-soft: #16302a;
+      --warn: #e7b25c;
+      --warn-soft: #33260f;
+      --danger: #ff9086;
+      --danger-soft: #3a1d1c;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e8eef8;
+    --ink-soft: #9aa9c0;
+    --canvas: #0d1526;
+    --surface: #151f33;
+    --surface-2: #1b2740;
+    --line: #2b3a56;
+    --brand: #6aa4ff;
+    --brand-dark: #97c0ff;
+    --brand-soft: #1b2b48;
+    --ok: #5ed09b;
+    --ok-soft: #16302a;
+    --warn: #e7b25c;
+    --warn-soft: #33260f;
+    --danger: #ff9086;
+    --danger-soft: #3a1d1c;
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  * { box-sizing: border-box; }
+  button { font: inherit; touch-action: manipulation; }
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- 약사 화면 프레임 ---------- */
+  .shell { display: flex; flex-direction: column; min-height: 100%; }
+  .topbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-row {
+    max-width: 1240px; margin: 0 auto; padding: 10px 16px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  }
+  .brandmark { font-weight: 700; color: var(--brand); letter-spacing: -.01em; }
+  .pharmacy { font-weight: 600; color: var(--ink-soft); font-size: 13px; }
+  .spacer { margin-left: auto; }
+
+  .steps { max-width: 1240px; margin: 0 auto; padding: 0 16px 10px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; list-style: none; }
+  .steps li { display: flex; align-items: center; gap: 4px; }
+  .step {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 34px;
+    padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    background: var(--surface); color: var(--ink-soft); box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .step[data-state="done"] { background: var(--ok-soft); color: var(--ok); box-shadow: none; }
+  .step[data-state="now"] { background: var(--brand); color: #fff; box-shadow: none; }
+  .step-sep { color: var(--line); }
+
+  main.page { flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 16px; padding-block: 18px; }
+  .page-head h1 { font-size: 21px; line-height: 1.35; margin: 0; text-wrap: balance; letter-spacing: -.015em; }
+  .page-head p { margin: 6px 0 0; color: var(--ink-soft); font-size: 14px; }
+
+  .actionbar {
+    position: sticky; bottom: 0; z-index: 15;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--line);
+    padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .actionbar-row { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: flex-end; }
+
+  /* ---------- 공통 요소 ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+  .card-head { padding: 12px 14px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .card-head h2 { margin: 0; font-size: 15px; }
+  .card-body { padding: 14px; }
+  .grid-2 { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-2.wide-left { grid-template-columns: 1.1fr 1fr; } }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 48px; padding: 0 18px; border-radius: 10px; border: 0;
+    font-weight: 700; cursor: pointer; background: var(--brand); color: #fff;
+  }
+  .btn:hover { background: var(--brand-dark); }
+  .btn[disabled] { background: var(--line); color: var(--ink-soft); cursor: not-allowed; }
+  .btn.ghost { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+  .btn.ghost:hover { box-shadow: inset 0 0 0 2px var(--brand); color: var(--brand); background: var(--surface); }
+  .btn.warn { background: var(--surface); color: var(--danger); box-shadow: inset 0 0 0 2px var(--danger); }
+  .btn.warn:hover { background: var(--danger-soft); }
+  .btn.sm { min-height: 38px; padding: 0 12px; font-size: 13px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--ink-soft); }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.bad { background: var(--danger-soft); color: var(--danger); }
+  .chip.brand { background: var(--brand-soft); color: var(--brand-dark); }
+
+  .notice { display: flex; gap: 8px; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+  .notice.warn { background: var(--warn-soft); color: var(--warn); }
+  .notice.bad { background: var(--danger-soft); color: var(--danger); }
+  .notice.ok { background: var(--ok-soft); color: var(--ok); }
+  .notice.brand { background: var(--brand-soft); color: var(--brand-dark); }
+
+  .field { border: 2px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 6px; background: var(--surface); }
+  .field[data-level="LOW"], .field[data-level="MISSING"] { border-color: color-mix(in srgb, var(--danger) 55%, transparent); background: color-mix(in srgb, var(--danger-soft) 55%, var(--surface)); }
+  .field[data-level="REVIEW"] { border-color: color-mix(in srgb, var(--warn) 55%, transparent); background: color-mix(in srgb, var(--warn-soft) 55%, var(--surface)); }
+  .field-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; }
+  .field label { font-weight: 700; font-size: 13px; }
+  .req { color: var(--danger); }
+  .field input, .field select, .text-input {
+    width: 100%; min-height: 46px; padding: 0 10px; font: inherit; color: var(--ink);
+    background: var(--surface); border: 2px solid var(--line); border-radius: 8px;
+  }
+  .field input:focus, .field select:focus { border-color: var(--brand); outline: none; }
+  .src { font-size: 11.5px; color: var(--ink-soft); }
+  .link { background: none; border: 0; color: var(--brand); font-weight: 700; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; }
+
+  /* 카메라 인식 연출 */
+  .scanbox { position: relative; background: #0b1220; padding: 20px; overflow: hidden; }
+  .scanbox img { display: block; width: 100%; border-radius: 6px; box-shadow: 0 14px 34px rgba(0,0,0,.5); }
+  .corner { position: absolute; width: 28px; height: 28px; border: 3px solid #6aa4ff; }
+  .c-tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; border-radius: 6px 0 0 0; }
+  .c-tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; border-radius: 0 6px 0 0; }
+  .c-bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; border-radius: 0 0 0 6px; }
+  .c-br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-radius: 0 0 6px 0; }
+  .scanline { position: absolute; left: 20px; right: 20px; height: 3px; background: linear-gradient(90deg, transparent, #6aa4ff, transparent); animation: scanmove 2.6s ease-in-out infinite; }
+  @keyframes scanmove { 0% { top: 20px; opacity: 0 } 12% { opacity: 1 } 88% { opacity: 1 } 100% { top: calc(100% - 20px); opacity: 0 } }
+  @media (prefers-reduced-motion: reduce) { .scanline { animation: none; top: 50% } }
+  .scanflag { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 999px; background: rgba(13,91,212,.92); color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .caselist li[data-sel="1"] { background: var(--brand-soft); }
+
+  /* 약봉투 원문 */
+  .bagwrap { position: relative; background: var(--surface-2); }
+  .bagwrap img { display: block; width: 100%; }
+  .mask { position: absolute; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: #101a2e; color: #fff; font-size: 10px; font-weight: 700; }
+  .hl { position: absolute; border-radius: 6px; outline: 4px solid var(--brand); outline-offset: 3px; background: color-mix(in srgb, var(--brand) 12%, transparent); pointer-events: none; }
+  .raw { margin: 0; padding: 10px; background: var(--surface-2); border-radius: 8px; font-family: var(--font-mono); font-size: 11.5px; white-space: pre-wrap; }
+
+  /* 안내카드 */
+  .gcard { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); display: grid; gap: 8px; }
+  .gcard[data-on="1"] { border-color: color-mix(in srgb, var(--brand) 45%, transparent); background: color-mix(in srgb, var(--brand-soft) 45%, var(--surface)); }
+  .gcard[data-on="0"] { opacity: .68; }
+  .gcard-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .gcard-sentence { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.5; }
+  .gcard-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .sendtoggle {
+    display: inline-flex; align-items: center; gap: 7px; min-height: 44px;
+    padding: 0 14px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+    background: var(--brand); color: #fff;
+  }
+  .sendtoggle input { width: 20px; height: 20px; accent-color: #fff; flex: none; }
+  .gcard[data-on="0"] .sendtoggle { background: var(--surface); color: var(--ink-soft); box-shadow: inset 0 0 0 2px var(--line); }
+  .movebtn { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 11px; border-radius: 10px; border: 0; background: var(--surface-2); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; }
+  .movebtn:hover { background: var(--brand-soft); color: var(--brand-dark); }
+  .movebtn:disabled { opacity: .35; cursor: not-allowed; }
+  .howto {
+    display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+    padding: 12px 14px; border-radius: 12px; background: var(--brand-soft); color: var(--brand-dark);
+    font-size: 13px; font-weight: 600; margin-bottom: 10px;
+  }
+  .howto b { font-weight: 800; }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .spin { display: inline-block; animation: spin 1s linear infinite }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none } }
+  .liblist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 340px; overflow-y: auto; }
+  .liblist li { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .liblist li p { margin: 0; flex: 1; font-size: 14px; font-weight: 600; line-height: 1.5; }
+  .liblist li[data-added="1"] { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+  .sub-preview { background: var(--pt-bg); color: var(--pt-ink); border-radius: 10px; padding: 12px 14px; }
+  .sub-preview .idx { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.5); margin-bottom: 4px; }
+  .sub-preview p { margin: 0; font-weight: 700; line-height: 1.5; }
+  em.hi { font-style: normal; font-weight: 800; text-decoration: underline; text-decoration-color: var(--brand); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+
+  .checkrow { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border: 2px solid var(--line); border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; background: var(--surface); }
+  .checkrow input { width: 22px; height: 22px; accent-color: var(--brand); flex: none; }
+  .checkrow:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+
+  dl.kv { margin: 0; display: grid; gap: 6px; font-size: 12.5px; }
+  dl.kv > div { display: flex; justify-content: space-between; gap: 10px; }
+  dl.kv dt { color: var(--ink-soft); margin: 0; }
+  dl.kv dd { margin: 0; font-weight: 700; }
+
+  .caselist { list-style: none; margin: 0; padding: 0; }
+  .caselist li { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); }
+  .caselist li:first-child { border-top: 0; }
+  .casethumb { width: 112px; height: 78px; flex: none; border: 1px solid var(--line); border-radius: 8px; object-fit: cover; background: var(--surface-2); }
+  .casemeta { min-width: 0; flex: 1; }
+  .casemeta p { margin: 0; }
+  .casename { font-weight: 700; font-size: 13.5px; }
+  .casedesc { font-size: 12px; color: var(--ink-soft); }
+
+  /* ---------- 환자 화면 ---------- */
+  .patient { position: fixed; inset: 0; z-index: 60; background: var(--pt-bg); color: var(--pt-ink); display: flex; flex-direction: column; padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); overflow: hidden; }
+  .patient.scroll { overflow-y: auto; }
+  .pt-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: none; margin-bottom: 10px; }
+  .chip.dim { background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); }
+  .pt-stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: var(--pt-panel); border-radius: 16px; overflow: hidden; }
+  .pt-stage video, .pt-stage svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .ptslot { position: absolute; inset: 0; }
+  .ptslot video { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--pt-panel); }
+  .ptload { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--pt-panel); color: rgba(255,255,255,.72); font-size: 15px; font-weight: 700; z-index: 2; }
+  #vwarm { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+  .steptag { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; margin: 16px 2px 2px; }
+  .steptag .num { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 14px; }
+  .steptag .opt { font-size: 12px; font-weight: 600; color: var(--ink-soft); background: var(--surface-2); border-radius: 999px; padding: 3px 10px; }
+  .addcta { border: 3px dashed var(--brand); border-radius: var(--radius-card); background: var(--brand-soft); padding: 16px 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .addcta-text { flex: 1 1 260px; }
+  .addcta-text h2 { margin: 0 0 4px; font-size: 17px; }
+  .addcta-text p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+  .btn.lg { min-height: 60px; padding: 0 24px; font-size: 16px; flex: none; }
+  .modal-back { position: fixed; inset: 0; background: rgba(12,18,28,.58); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .modal-box { background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-card); box-shadow: 0 24px 60px rgba(0,0,0,.28); max-width: 460px; width: 100%; padding: 22px; }
+  .modal-box h3 { margin: 0 0 8px; font-size: 19px; }
+  .modal-box p { margin: 0 0 6px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .modal-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+  @keyframes pulsering { 0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0) } 35% { box-shadow: 0 0 0 7px rgba(37,99,235,.32) } }
+  .pulse { animation: pulsering 1.1s ease-in-out 2; border-color: var(--brand) !important; }
+  @media (prefers-reduced-motion: reduce) { .pulse { animation: none } }
+  .pt-badges { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .pt-note { flex: none; font-size: 12px; color: rgba(255,255,255,.48); padding: 6px 2px 0; }
+  .pt-sub { flex: none; background: rgba(0,0,0,.55); border-radius: 16px; padding: 14px 18px; margin-top: 4px; }
+  .pt-sub-meta { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.55); margin-bottom: 6px; }
+  .pt-sub p { margin: 0; font-size: clamp(20px, 3.2vw, 30px); font-weight: 700; line-height: 1.45; }
+  .pt-bar { flex: none; height: 9px; border-radius: 999px; background: rgba(255,255,255,.15); overflow: hidden; margin-top: 10px; }
+  .pt-bar i { display: block; height: 100%; background: #4b8dfb; border-radius: 999px; transition: width .2s linear; }
+  .pt-controls { flex: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .btn-pt { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 60px; padding: 0 22px; border: 0; border-radius: 14px; font-size: 18px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,.14); color: #fff; }
+  .btn-pt:hover { background: rgba(255,255,255,.24); }
+  .btn-pt[disabled] { opacity: .4; cursor: not-allowed; }
+  .btn-pt.solid { background: #fff; color: var(--ink); }
+  .btn-pt.go { background: var(--brand); color: #fff; }
+  .btn-pt.done { background: var(--ok); color: #fff; }
+  .pt-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; }
+  .pt-center h2 { margin: 0; font-size: clamp(24px, 4vw, 36px); text-wrap: balance; }
+  .pt-center p { margin: 0; font-size: clamp(16px, 2.2vw, 21px); color: rgba(255,255,255,.8); }
+  .pt-glyph { font-size: 58px; line-height: 1; }
+  .qgrid { display: grid; gap: 8px; grid-template-columns: 1fr; width: 100%; max-width: 720px; }
+  @media (min-width: 620px) { .qgrid { grid-template-columns: 1fr 1fr; } }
+  .glosses { position: absolute; bottom: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .gloss { padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,.14); color: rgba(255,255,255,.72); }
+  .gloss[data-on="1"] { background: #fff; color: var(--ink); }
+
+  /* 인쇄 */
+  .printsheet img { width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  @media print {
+    .noprint { display: none !important; }
+    body { background: #fff; }
+    .printsheet { break-inside: avoid; }
+  }
+
+  .foot { max-width: 1240px; margin: 0 auto; padding: 8px 16px 24px; color: var(--ink-soft); font-size: 12px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* =========================================================================
+ * 약봉투 OCR 기반 농인 대상 수어 복약지도 서비스 — 약사용 태블릿 데모
+ * 설계서 v1.0 부록 C 기준. 모든 데이터는 시연용 가상 데이터.
+ * 이 링크형 데모는 브라우저 안에서만 동작합니다(서버 없음).
+ * ========================================================================= */
+
+/* ── 최소 QR 코드 인코더 (Model 2, 바이트 모드, 오류정정 L, 버전 1~10) ──
+   외부 라이브러리 없이 동작한다. 표준 ISO/IEC 18004 절차를 따른다. */
+const EXP = new Uint8Array(512);
+const LOG = new Uint8Array(256);
+(() => {
+  let x = 1;
+  for (let i = 0; i < 255; i += 1) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 0x100) x ^= 0x11d; }
+  for (let i = 255; i < 512; i += 1) EXP[i] = EXP[i - 255];
+})();
+const gmul = (a, b) => (a && b ? EXP[LOG[a] + LOG[b]] : 0);
+
+function rsGenerator(n) {
+  let g = [1];
+  for (let i = 0; i < n; i += 1) {
+    const next = new Array(g.length + 1).fill(0);
+    for (let j = 0; j < g.length; j += 1) { next[j] ^= g[j]; next[j + 1] ^= gmul(g[j], EXP[i]); }
+    g = next;
+  }
+  return g;
+}
+function rsEcc(data, ecLen) {
+  const gen = rsGenerator(ecLen);
+  const buf = new Uint8Array(data.length + ecLen);
+  buf.set(data);
+  for (let i = 0; i < data.length; i += 1) {
+    const factor = buf[i];
+    if (factor === 0) continue;
+    for (let j = 0; j < gen.length; j += 1) buf[i + j] ^= gmul(gen[j], factor);
+  }
+  return Array.from(buf.slice(data.length));
+}
+
+/* 버전별 구조 (오류정정 L): [블록당 ECC 수, [ [블록수, 데이터코드워드] ... ] ] */
+const SPEC_L = {
+  1: [7, [[1, 19]]], 2: [10, [[1, 34]]], 3: [15, [[1, 55]]], 4: [20, [[1, 80]]],
+  5: [26, [[1, 108]]], 6: [18, [[2, 68]]], 7: [20, [[2, 78]]], 8: [24, [[2, 97]]],
+  9: [30, [[2, 116]]], 10: [18, [[2, 68], [2, 69]]],
+};
+const ALIGN = { 1: [], 2: [6, 18], 3: [6, 22], 4: [6, 26], 5: [6, 30], 6: [6, 34], 7: [6, 22, 38], 8: [6, 24, 42], 9: [6, 26, 46], 10: [6, 28, 50] };
+const REMAINDER = { 1: 0, 2: 7, 3: 7, 4: 7, 5: 7, 6: 7, 7: 0, 8: 0, 9: 0, 10: 0 };
+
+const dataCapacity = (v) => SPEC_L[v][1].reduce((sum, [n, d]) => sum + n * d, 0);
+
+function formatBits(mask) {
+  const data = (0b01 << 3) | mask; // 오류정정 L
+  let rem = data;
+  for (let i = 0; i < 10; i += 1) rem = (rem << 1) ^ (((rem >> 9) & 1) * 0x537);
+  return (((data << 10) | (rem & 0x3ff)) ^ 0x5412) & 0x7fff;
+}
+function versionBits(v) {
+  let rem = v;
+  for (let i = 0; i < 12; i += 1) rem = (rem << 1) ^ (((rem >> 11) & 1) * 0x1f25);
+  return ((v << 12) | (rem & 0xfff)) & 0x3ffff;
+}
+
+/** 바이트 모드 문자수 지시자: 버전 1~9는 8비트, 10 이상은 16비트 */
+const countBits = (v) => (v >= 10 ? 16 : 8);
+const byteCapacity = (v) => Math.floor((dataCapacity(v) * 8 - 4 - countBits(v)) / 8);
+
+function pickVersion(byteLen) {
+  for (let v = 1; v <= 10; v += 1) if (byteCapacity(v) >= byteLen) return v;
+  return null;
+}
+
+function buildCodewords(bytes, v) {
+  const bits = [];
+  const push = (value, len) => { for (let i = len - 1; i >= 0; i -= 1) bits.push((value >> i) & 1); };
+  push(0b0100, 4);            // 바이트 모드
+  push(bytes.length, countBits(v)); // 버전 1~9는 8비트, 10 이상은 16비트
+  for (const b of bytes) push(b, 8);
+
+  const total = dataCapacity(v);
+  const maxBits = total * 8;
+  for (let i = 0; i < 4 && bits.length < maxBits; i += 1) bits.push(0);
+  while (bits.length % 8 !== 0) bits.push(0);
+
+  const words = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    let byte = 0;
+    for (let j = 0; j < 8; j += 1) byte = (byte << 1) | bits[i + j];
+    words.push(byte);
+  }
+  const PAD = [0xec, 0x11];
+  let p = 0;
+  while (words.length < total) { words.push(PAD[p % 2]); p += 1; }
+
+  const [ecLen, groups] = SPEC_L[v];
+  const blocks = [];
+  let at = 0;
+  for (const [count, dataLen] of groups) {
+    for (let i = 0; i < count; i += 1) {
+      const chunk = words.slice(at, at + dataLen);
+      at += dataLen;
+      blocks.push({ data: chunk, ecc: rsEcc(chunk, ecLen) });
+    }
+  }
+  const out = [];
+  const maxData = Math.max(...blocks.map((b) => b.data.length));
+  for (let i = 0; i < maxData; i += 1) for (const b of blocks) if (i < b.data.length) out.push(b.data[i]);
+  for (let i = 0; i < ecLen; i += 1) for (const b of blocks) out.push(b.ecc[i]);
+  return out;
+}
+
+function makeMatrix(v) {
+  const size = 17 + 4 * v;
+  const m = Array.from({ length: size }, () => new Array(size).fill(null));
+  const fixed = Array.from({ length: size }, () => new Array(size).fill(false));
+  const set = (r, c, val) => { if (r >= 0 && r < size && c >= 0 && c < size) { m[r][c] = val; fixed[r][c] = true; } };
+
+  const finder = (r0, c0) => {
+    for (let r = -1; r <= 7; r += 1) for (let c = -1; c <= 7; c += 1) {
+      const inRing = r >= 0 && r <= 6 && c >= 0 && c <= 6;
+      const dark = inRing && ((r === 0 || r === 6 || c === 0 || c === 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
+      set(r0 + r, c0 + c, dark ? 1 : 0);
+    }
+  };
+  finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
+
+  for (let i = 8; i < size - 8; i += 1) { const dark = i % 2 === 0 ? 1 : 0; set(6, i, dark); set(i, 6, dark); }
+
+  for (const r of ALIGN[v]) for (const c of ALIGN[v]) {
+    if ((r <= 8 && c <= 8) || (r <= 8 && c >= size - 9) || (r >= size - 9 && c <= 8)) continue;
+    for (let dr = -2; dr <= 2; dr += 1) for (let dc = -2; dc <= 2; dc += 1) {
+      const dark = Math.max(Math.abs(dr), Math.abs(dc)) !== 1 ? 1 : 0;
+      set(r + dr, c + dc, dark);
+    }
+  }
+
+  set(size - 8, 8, 1); // 고정 어두운 모듈
+  for (let i = 0; i < 9; i += 1) { if (i !== 6) { set(8, i, 0); set(i, 8, 0); } }
+  for (let i = 0; i < 8; i += 1) { set(8, size - 1 - i, 0); set(size - 1 - i, 8, 0); }
+  if (v >= 7) {
+    for (let i = 0; i < 18; i += 1) { set(size - 11 + (i % 3), Math.floor(i / 3), 0); set(Math.floor(i / 3), size - 11 + (i % 3), 0); }
+  }
+  return { m, fixed, size };
+}
+
+function placeData(m, fixed, size, codewords) {
+  const bits = [];
+  for (const w of codewords) for (let i = 7; i >= 0; i -= 1) bits.push((w >> i) & 1);
+  let bi = 0;
+  let up = true;
+  let col = size - 1;
+  while (col > 0) {
+    if (col === 6) col = 5; // 세로 타이밍 열은 통째로 건너뛴다
+    for (let n = 0; n < size; n += 1) {
+      const row = up ? size - 1 - n : n;
+      for (const c of [col, col - 1]) {
+        if (fixed[row][c]) continue;
+        m[row][c] = bi < bits.length ? bits[bi] : 0;
+        bi += 1;
+      }
+    }
+    up = !up;
+    col -= 2;
+  }
+  return bi;
+}
+
+const maskFn = [
+  (r, c) => (r + c) % 2 === 0,
+  (r) => r % 2 === 0,
+  (r, c) => c % 3 === 0,
+  (r, c) => (r + c) % 3 === 0,
+  (r, c) => (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0,
+  (r, c) => ((r * c) % 2) + ((r * c) % 3) === 0,
+  (r, c) => (((r * c) % 2) + ((r * c) % 3)) % 2 === 0,
+  (r, c) => (((r + c) % 2) + ((r * c) % 3)) % 2 === 0,
+];
+
+function applyFormat(m, size, mask) {
+  const bits = formatBits(mask);
+  const bit = (i) => (bits >> (14 - i)) & 1; // 15비트를 MSB부터 배치한다
+  for (let i = 0; i <= 5; i += 1) m[8][i] = bit(i);
+  m[8][7] = bit(6); m[8][8] = bit(7); m[7][8] = bit(8);
+  for (let i = 9; i <= 14; i += 1) m[14 - i][8] = bit(i);
+  // 두 번째 사본: 비트 0~6은 열 8의 아래쪽 7칸, 비트 7~14는 행 8의 오른쪽 8칸
+  for (let i = 0; i <= 6; i += 1) m[size - 1 - i][8] = bit(i);
+  for (let i = 7; i <= 14; i += 1) m[8][size - 15 + i] = bit(i);
+  m[size - 8][8] = 1; // 고정 어두운 모듈
+}
+function applyVersion(m, size, v) {
+  if (v < 7) return;
+  const bits = versionBits(v);
+  for (let i = 0; i < 18; i += 1) {
+    const b = (bits >> i) & 1; // 버전 정보는 LSB부터 배치한다
+    m[size - 11 + (i % 3)][Math.floor(i / 3)] = b;
+    m[Math.floor(i / 3)][size - 11 + (i % 3)] = b;
+  }
+}
+
+function penalty(m, size) {
+  let score = 0;
+  const runScore = (line) => {
+    let s = 0, run = 1;
+    for (let i = 1; i < line.length; i += 1) {
+      if (line[i] === line[i - 1]) run += 1;
+      else { if (run >= 5) s += 3 + (run - 5); run = 1; }
+    }
+    if (run >= 5) s += 3 + (run - 5);
+    return s;
+  };
+  for (let r = 0; r < size; r += 1) score += runScore(m[r]);
+  for (let c = 0; c < size; c += 1) score += runScore(m.map((row) => row[c]));
+  for (let r = 0; r < size - 1; r += 1) for (let c = 0; c < size - 1; c += 1) {
+    const v = m[r][c];
+    if (v === m[r][c + 1] && v === m[r + 1][c] && v === m[r + 1][c + 1]) score += 3;
+  }
+  const PAT_A = [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0];
+  const PAT_B = [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1];
+  const hit = (line, i) => (PAT_A.every((p, k) => line[i + k] === p) ? 1 : 0) + (PAT_B.every((p, k) => line[i + k] === p) ? 1 : 0);
+  const cols = [];
+  for (let c = 0; c < size; c += 1) cols.push(m.map((row) => row[c]));
+  for (let i = 0; i < size; i += 1) for (let j = 0; j + 11 <= size; j += 1) {
+    score += 40 * hit(m[i], j);
+    score += 40 * hit(cols[i], j);
+  }
+  let dark = 0;
+  for (let r = 0; r < size; r += 1) for (let c = 0; c < size; c += 1) dark += m[r][c];
+  const ratio = (dark * 100) / (size * size);
+  score += Math.floor(Math.abs(ratio - 50) / 5) * 10;
+  return score;
+}
+
+function qrMatrix(text, forceMask = null) {
+  const bytes = Array.from(new TextEncoder().encode(text));
+  const v = pickVersion(bytes.length);
+  if (v === null) return null;
+  const codewords = buildCodewords(bytes, v);
+  let best = null;
+  for (let mask = 0; mask < 8; mask += 1) {
+    if (forceMask !== null && mask !== forceMask) continue;
+    const { m, fixed, size } = makeMatrix(v);
+    placeData(m, fixed, size, codewords);
+    for (let r = 0; r < size; r += 1) for (let c = 0; c < size; c += 1) {
+      if (!fixed[r][c] && maskFn[mask](r, c)) m[r][c] ^= 1;
+    }
+    applyFormat(m, size, mask);
+    applyVersion(m, size, v);
+    const score = penalty(m, size);
+    if (best === null || score < best.score) best = { m, size, score, mask, v };
+  }
+  return best;
+}
+
+/** QR을 SVG 문자열로 그린다 (여백 4모듈 포함) */
+function qrSvg(text, px) {
+  const r = qrMatrix(text);
+  if (r === null) return null;
+  const quiet = 4;
+  const n = r.size + quiet * 2;
+  const path = [];
+  for (let y = 0; y < r.size; y += 1) {
+    for (let x = 0; x < r.size; x += 1) {
+      if (r.m[y][x] === 1) path.push(`M${x + quiet} ${y + quiet}h1v1h-1z`);
+    }
+  }
+  return `<svg viewBox="0 0 ${n} ${n}" width="${px}" height="${px}" shape-rendering="crispEdges" role="img" aria-label="복약안내 다시보기 QR"><rect width="${n}" height="${n}" fill="#ffffff"/><path d="${path.join('')}" fill="#101a2e"/></svg>`;
+}
+
+
+const T = {
+  AFTER_MEAL_30: '식후 30분', AFTER_MEAL: '식후', WITH_MEAL: '식사와 함께',
+  BEFORE_MEAL_30: '식전 30분', BEFORE_MEAL: '식전', BEDTIME: '취침 전',
+  EMPTY_STOMACH: '공복', AS_NEEDED: '필요할 때',
+};
+
+/* 검수 문구DB — 약봉투에 기재됐거나 검수된 문구만 사용 (설계서 12 1 원칙 5) */
+const CAUTIONS = {
+  DROWSINESS:   { label: '졸림 주의',      text: '이 약은 졸릴 수 있습니다.', gloss: ['이','약','졸리다','가능'] },
+  DRIVING:      { label: '운전 주의',      text: '운전이나 위험한 기계 조작을 주의하세요.', gloss: ['운전','기계','위험','조심'] },
+  ALCOHOL:      { label: '음주 주의',      text: '약을 먹는 동안 술은 마시지 마세요.', gloss: ['약','먹다','동안','술','안되다'] },
+  MIN_INTERVAL: { label: '최소 복용간격',  text: '다시 먹을 때는 최소 4시간 이상 간격을 두세요.', gloss: ['다시','먹다','최소','4시간','간격'] },
+  STORAGE_ROOM_TEMP: { label: '실온 보관', text: '직사광선을 피해 실온에 보관하세요.', gloss: ['햇빛','피하다','실온','보관'] },
+  ADVERSE_REACTION:  { label: '이상반응',  text: '발진이나 이상반응이 나타나면 복용을 중단하고 약사 또는 의료기관에 문의하세요.', gloss: ['발진','이상','나타나다','먹다','중단','약사','병원','문의'] },
+};
+
+/* ──────────────────────────────────────────────────────────────
+ * 주의사항 안내 문구 모음 (시연용 예시)
+ * 약사가 성분·조제 내용을 보고 덧붙이는 안내를 카테고리로 정리했다.
+ * 실제 운영에서는 약사 자문단과 농인 자문단의 검수를 거친 문구만 등록한다
+ * (설계서 17 1 콘텐츠 검수).
+ * ────────────────────────────────────────────────────────────── */
+const CAUTION_CATEGORIES = [
+  { key: 'DROWSY', label: '졸음 · 운전', icon: '😴' },
+  { key: 'STOMACH', label: '소화 · 위장', icon: '🍚' },
+  { key: 'FEVER', label: '열 · 통증', icon: '🌡' },
+  { key: 'ANTIBIOTIC', label: '항생제', icon: '💊' },
+  { key: 'AVOID', label: '술 · 함께 먹지 않기', icon: '🚫' },
+  { key: 'HOWTO', label: '먹는 방법', icon: '🥛' },
+  { key: 'STORAGE', label: '보관', icon: '📦' },
+  { key: 'REACTION', label: '이상반응', icon: '⚠️' },
+  { key: 'MISSED', label: '시간을 놓쳤을 때', icon: '⏰' },
+];
+
+const CAUTION_LIBRARY = [
+  { cat: 'DROWSY', text: '이 약은 졸릴 수 있습니다. 운전이나 위험한 기계 조작을 피해 주세요.', gloss: ['이', '약', '졸리다', '운전', '기계', '안되다'], keys: '졸음 졸림 운전 기계' },
+  { cat: 'DROWSY', text: '저녁에 먹는 약은 특히 졸릴 수 있습니다.', gloss: ['저녁', '약', '더', '졸리다'], keys: '졸음 저녁 취침' },
+  { cat: 'DROWSY', text: '많이 졸리면 약사에게 말씀해 주세요.', gloss: ['많이', '졸리다', '약사', '말하다'], keys: '졸음 상담' },
+  { cat: 'STOMACH', text: '속이 쓰릴 수 있어 위를 보호하는 약이 함께 들어 있습니다.', gloss: ['속', '쓰리다', '위', '보호', '약', '함께'], keys: '소화 위장 속쓰림 위보호 소화제' },
+  { cat: 'STOMACH', text: '속이 불편하면 음식을 조금 먹고 약을 드세요.', gloss: ['속', '불편', '음식', '조금', '먹다', '약', '먹다'], keys: '소화 속불편 음식' },
+  { cat: 'STOMACH', text: '소화가 잘 안 되면 식사 후에 드세요.', gloss: ['소화', '안되다', '밥', '먹다', '후', '먹다'], keys: '소화불량 식후' },
+  { cat: 'FEVER', text: '열이 내리지 않으면 병원에 가 주세요.', gloss: ['열', '안', '내리다', '병원', '가다'], keys: '열 발열 해열 병원' },
+  { cat: 'FEVER', text: '열이 날 때는 물을 자주 드세요.', gloss: ['열', '나다', '물', '자주', '먹다'], keys: '열 수분 물' },
+  { cat: 'FEVER', text: '통증이 있을 때만 드시고, 하루 정해진 횟수를 넘기지 마세요.', gloss: ['아프다', '때', '먹다', '하루', '횟수', '넘다', '안되다'], keys: '통증 진통제 횟수' },
+  { cat: 'ANTIBIOTIC', text: '증상이 좋아져도 이 약은 끝까지 드세요.', gloss: ['증상', '좋다', '되다', '약', '끝', '먹다'], keys: '항생제 끝까지' },
+  { cat: 'ANTIBIOTIC', text: '남은 약은 다음에 다시 쓰지 마세요.', gloss: ['남다', '약', '다음', '쓰다', '안되다'], keys: '항생제 남은약' },
+  { cat: 'AVOID', text: '약을 먹는 동안 술은 마시지 마세요.', gloss: ['약', '먹다', '동안', '술', '안되다'], keys: '술 음주' },
+  { cat: 'AVOID', text: '다른 약과 시간 간격을 두고 드세요.', gloss: ['다른', '약', '시간', '간격', '두다'], keys: '병용 간격 다른약' },
+  { cat: 'AVOID', text: '드시는 건강기능식품이 있으면 약사에게 알려 주세요.', gloss: ['건강', '식품', '먹다', '약사', '알리다'], keys: '건강식품 영양제' },
+  { cat: 'HOWTO', text: '물을 한 컵 이상 충분히 드세요.', gloss: ['물', '한컵', '이상', '충분', '먹다'], keys: '물 복용법' },
+  { cat: 'HOWTO', text: '알약은 씹지 말고 그대로 삼켜 주세요.', gloss: ['알약', '씹다', '안되다', '그대로', '삼키다'], keys: '복용법 씹다 삼키다' },
+  { cat: 'HOWTO', text: '가루약은 물에 타서 드세요.', gloss: ['가루', '약', '물', '타다', '먹다'], keys: '가루약 산제' },
+  { cat: 'HOWTO', text: '누워서 드시지 말고 앉거나 서서 드세요.', gloss: ['눕다', '안되다', '앉다', '서다', '먹다'], keys: '복용법 자세' },
+  { cat: 'STORAGE', text: '직사광선을 피해 실온에 보관하세요.', gloss: ['햇빛', '피하다', '실온', '보관'], keys: '보관 실온 햇빛' },
+  { cat: 'STORAGE', text: '이 약은 냉장고에 보관하세요.', gloss: ['이', '약', '냉장고', '보관'], keys: '보관 냉장' },
+  { cat: 'STORAGE', text: '어린이 손이 닿지 않는 곳에 두세요.', gloss: ['어린이', '손', '닿다', '안되다', '곳', '두다'], keys: '보관 어린이' },
+  { cat: 'REACTION', text: '발진이나 두드러기가 생기면 약을 멈추고 약국이나 병원에 오세요.', gloss: ['발진', '두드러기', '생기다', '약', '멈추다', '약국', '병원', '오다'], keys: '이상반응 발진 두드러기 알레르기' },
+  { cat: 'REACTION', text: '숨이 차거나 얼굴이 부으면 바로 병원에 가세요.', gloss: ['숨', '차다', '얼굴', '붓다', '바로', '병원', '가다'], keys: '이상반응 호흡 부종' },
+  { cat: 'REACTION', text: '설사가 심하면 약사에게 말씀해 주세요.', gloss: ['설사', '심하다', '약사', '말하다'], keys: '이상반응 설사' },
+  { cat: 'MISSED', text: '먹는 시간을 놓쳤으면 생각난 즉시 드세요.', gloss: ['시간', '놓치다', '생각', '나다', '바로', '먹다'], keys: '놓침 잊음' },
+  { cat: 'MISSED', text: '다음 먹을 시간이 가까우면 건너뛰고 한 번만 드세요.', gloss: ['다음', '시간', '가깝다', '건너뛰다', '한번', '먹다'], keys: '놓침 건너뛰기' },
+  { cat: 'MISSED', text: '두 번 분량을 한꺼번에 드시면 안 됩니다.', gloss: ['두번', '양', '한번', '먹다', '안되다'], keys: '놓침 두배 과다' },
+].map((x, i) => ({ id: 'LIB_' + String(i + 1).padStart(2, '0'), ...x }));
+
+/* 데모용 샘플 수어영상 — 실제 안내 내용과 일치하지 않는다 */
+const CLIPS = [
+  { url: 'avatar-samples/sign-1.mp4', ms: 10230 },
+  { url: 'avatar-samples/sign-2.mp4', ms: 9500 },
+  { url: 'avatar-samples/sign-3.mp4', ms: 8170 },
+  { url: 'avatar-samples/sign-4.mp4', ms: 9800 },
+  { url: 'avatar-samples/sign-5.mp4', ms: 10670 },
+];
+/* 영상이 시작될 때 멈춘 것처럼 보이지 않도록, 샘플 영상 5개를 미리 받아 두고
+   같은 <video> 요소를 계속 재사용한다. 화면을 다시 그릴 때 요소가 사라지지 않게
+   따로 보관해 두었다가 다시 붙인다. */
+const VEL = {};
+function warmHolder() {
+  let h = document.getElementById('vwarm');
+  if (!h) { h = document.createElement('div'); h.id = 'vwarm'; h.setAttribute('aria-hidden', 'true'); document.body.appendChild(h); }
+  return h;
+}
+function videoFor(url) {
+  if (!VEL[url]) {
+    const v = document.createElement('video');
+    v.muted = true; v.defaultMuted = true; v.playsInline = true;
+    v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+    v.preload = 'auto'; v.src = url;
+    v.addEventListener('error', () => {
+      if (S.player && !S.player.broken) { S.player.broken = true; render(); }
+    });
+    warmHolder().appendChild(v);
+    try { v.load(); } catch (_) {}
+    VEL[url] = v;
+  }
+  return VEL[url];
+}
+function preloadClips() { CLIPS.forEach((c) => videoFor(c.url)); }
+function parkVideos() {
+  const h = warmHolder();
+  Object.keys(VEL).forEach((u) => { const v = VEL[u]; if (v.parentNode !== h) { try { v.pause(); } catch (_) {} h.appendChild(v); } });
+}
+function mountedVideo() {
+  const p = S.player;
+  if (!p || p.broken) return null;
+  const seg = p.segments[p.i];
+  if (!seg) return null;
+  const v = VEL[seg.url];
+  return v && v.closest('.ptslot') ? v : null;
+}
+
+const CLIP_NOTICE = '※ 이 수어 영상은 시연용 예시입니다. 아래 자막 내용과는 다릅니다.';
+
+const TH = { high: 0.90, review: 0.75 };
+const QR_TTL_HOURS = 48;
+
+const F = (v, c, orig, norm, bbox) => ({ value: v, confidence: c, originalText: orig, normalizedText: norm, bbox, source: 'BAG_OCR', verified: false });
+const NONE = (bbox = null) => F(null, 0, '', '', bbox);
+
+/* ---------------- 시연 케이스 (부록 A 3 가상 데이터) ---------------- */
+const SAMPLES = [
+  {
+    id: 'SAMPLE_BAG_1', tag: '감기', name: '일반 약봉투',
+    desc: '한 번에 1포 · 하루 3번 · 3일 동안 · 식후 30분',
+    img: 'samples/bag-regular.svg', asNeededBag: false, timingCandidates: [], mask: { x:.07, y:.152, w:.26, h:.056 },
+    quality: { status: 'PASS', blur: .08, glare: .04, messages: [] },
+    rawText: '서울 열린약국 / 환자 김OO / 조제일 2026년 9월 21일\n시연용 A정  시연용 B캡슐  시연용 C정\n1회 1포 / 1일 3회 / 3일분 / 식후 30분\n주의  졸음이 올 수 있음',
+    groups: [{
+      medicineName: F('시연용 A정, 시연용 B캡슐, 시연용 C정', .94, '시연용 A정 시연용 B캡슐 시연용 C정', '시연용 A정, 시연용 B캡슐, 시연용 C정', { x:.07, y:.275, w:.86, h:.062 }),
+      doseAmount: F(1, .97, '1회 1포', '1회 1포', { x:.075, y:.505, w:.20, h:.068 }),
+      doseUnit: F('포', .97, '포', '포', { x:.075, y:.505, w:.20, h:.068 }),
+      frequencyPerDay: F(3, .95, '1일 3회', '1일 3회', { x:.515, y:.505, w:.20, h:.068 }),
+      durationDays: F(3, .82, '3일분', '3일', { x:.075, y:.608, w:.18, h:.068 }),
+      timingCode: F('AFTER_MEAL_30', .91, '식후 30분', '식후 30분', { x:.515, y:.608, w:.22, h:.068 }),
+      asNeeded: F(false, .99, '', '상시 복용', null),
+      symptom: null, cautions: ['DROWSINESS'],
+    }],
+  },
+  {
+    id: 'SAMPLE_BAG_5', tag: '표 인쇄', name: '표로 인쇄된 약봉투',
+    desc: '약품별로 표에 적힌 약봉투 · 단위와 먹는 시점은 확인 필요',
+    img: 'samples/bag-table.svg', asNeededBag: false, mask: { x:.065, y:.133, w:.20, h:.048 },
+    timingCandidates: ['AFTER_MEAL_30', 'AFTER_MEAL', 'BEFORE_MEAL_30', 'BEFORE_MEAL'],
+    quality: { status: 'REVIEW', blur: .18, glare: .12, messages: ['표 안의 작은 숫자를 약봉투와 꼭 비교해 주세요'] },
+    rawText: '조 제 약\n환자  김OO   조제일 2026-09-21   조제번호 2026-0921-0007   서울 열린약국\n의약품명  1회 투여량  1일 투여횟수  총 투약일수\n시연용 A정  1.00  3  3\n시연용 B캡슐  1.00  3  3\n시연용 C정  0.50  3  3\n매 식 전 · 간 · 후 ___ 시 ___ 분 복용\n주의  졸음이 올 수 있음',
+    groups: [
+      {
+        medicineName: F('시연용 A정', .92, '시연용 A정', '시연용 A정', { x:.075, y:.313, w:.30, h:.063 }),
+        doseAmount: F(1, .94, '1.00', '1', { x:.565, y:.313, w:.09, h:.063 }),
+        doseUnit: NONE(), /* 표에 단위가 없으므로 추정하지 않는다 */
+        frequencyPerDay: F(3, .93, '3', '1일 3회', { x:.72, y:.313, w:.055, h:.063 }),
+        durationDays: F(3, .92, '3', '3일', { x:.84, y:.313, w:.055, h:.063 }),
+        timingCode: NONE({ x:.07, y:.577, w:.56, h:.057 }),
+        asNeeded: F(false, .98, '', '상시 복용', null), symptom: null, cautions: ['DROWSINESS'],
+      },
+      {
+        medicineName: F('시연용 B캡슐', .90, '시연용 B캡슐', '시연용 B캡슐', { x:.075, y:.377, w:.30, h:.063 }),
+        doseAmount: F(1, .94, '1.00', '1', { x:.565, y:.377, w:.09, h:.063 }),
+        doseUnit: NONE(),
+        frequencyPerDay: F(3, .93, '3', '1일 3회', { x:.72, y:.377, w:.055, h:.063 }),
+        durationDays: F(3, .91, '3', '3일', { x:.84, y:.377, w:.055, h:.063 }),
+        timingCode: NONE({ x:.07, y:.577, w:.56, h:.057 }),
+        asNeeded: F(false, .98, '', '상시 복용', null), symptom: null, cautions: [],
+      },
+      {
+        medicineName: F('시연용 C정', .91, '시연용 C정', '시연용 C정', { x:.075, y:.44, w:.30, h:.063 }),
+        doseAmount: F(0.5, .79, '0.50', '0.5', { x:.565, y:.44, w:.09, h:.063 }),
+        doseUnit: NONE(),
+        frequencyPerDay: F(3, .93, '3', '1일 3회', { x:.72, y:.44, w:.055, h:.063 }),
+        durationDays: F(3, .90, '3', '3일', { x:.84, y:.44, w:.055, h:.063 }),
+        timingCode: NONE({ x:.07, y:.577, w:.56, h:.057 }),
+        asNeeded: F(false, .98, '', '상시 복용', null), symptom: null, cautions: [],
+      },
+    ],
+  },
+  {
+    id: 'SAMPLE_BAG_2', tag: '통증', name: '증상 있을 때 먹는 약봉투',
+    desc: '증상 있을 때만 한 알 · 다른 약과 따로 안내',
+    img: 'samples/bag-asneeded.svg', asNeededBag: true, timingCandidates: [], mask: { x:.07, y:.152, w:.26, h:.056 },
+    quality: { status: 'PASS', blur: .09, glare: .05, messages: [] },
+    rawText: '서울 열린약국 / 필요시약\n시연용 D정\n증상이 있을 때 1회 1정\n주의  최소 4시간 간격을 두고 복용',
+    groups: [{
+      medicineName: F('시연용 D정', .93, '시연용 D정', '시연용 D정', { x:.07, y:.275, w:.42, h:.062 }),
+      doseAmount: F(1, .96, '1회 1정', '1회 1정', { x:.075, y:.505, w:.20, h:.068 }),
+      doseUnit: F('정', .96, '정', '정', { x:.075, y:.505, w:.20, h:.068 }),
+      frequencyPerDay: NONE(), durationDays: NONE(),
+      timingCode: F('AS_NEEDED', .90, '증상이 있을 때', '필요할 때', { x:.515, y:.608, w:.24, h:.068 }),
+      asNeeded: F(true, .95, '증상이 있을 때', '필요시 복용', { x:.515, y:.608, w:.24, h:.068 }),
+      symptom: '통증', cautions: ['MIN_INTERVAL'],
+    }],
+  },
+  {
+    id: 'SAMPLE_BAG_6', tag: '손글씨', name: '손으로 적은 약봉투',
+    desc: '글자를 거의 읽지 못해 복약정보를 직접 입력하는 경우',
+    img: 'samples/bag-handwritten.svg', asNeededBag: false,
+    timingCandidates: ['AFTER_MEAL_30', 'AFTER_MEAL', 'BEFORE_MEAL_30', 'BEFORE_MEAL'],
+    mask: { x: .16, y: .155, w: .22, h: .052 },
+    quality: { status: 'REVIEW', blur: .34, glare: .08, messages: ['손으로 적은 글자는 읽지 못했습니다. 복약정보를 직접 입력해 주세요'] },
+    rawText: '행복한약국\n성명 ___   조제일 ___\n1회 ___ 포(정)   1일 ___ 회\n총 ___ 일분   식후 · 식전 ___ 분\n주의사항 ___',
+    groups: [{
+      medicineName: NONE(),
+      doseAmount: NONE({ x: .14, y: .355, w: .12, h: .062 }),
+      doseUnit: NONE({ x: .28, y: .355, w: .14, h: .062 }),
+      frequencyPerDay: NONE({ x: .53, y: .355, w: .12, h: .062 }),
+      durationDays: NONE({ x: .13, y: .45, w: .13, h: .062 }),
+      timingCode: NONE({ x: .47, y: .45, w: .33, h: .062 }),
+      asNeeded: F(false, .9, '', '상시 복용', null),
+      symptom: null, cautions: [],
+    }],
+  },
+  {
+    id: 'SAMPLE_BAG_3', tag: '사진 흐림', name: '흐리게 찍힌 약봉투',
+    desc: '글자가 흐려 다시 찍어야 하는 경우',
+    img: 'samples/bag-blur.svg', asNeededBag: false, timingCandidates: [], mask: { x:.07, y:.152, w:.26, h:.056 },
+    quality: { status: 'RETAKE', blur: .62, glare: .07, messages: ['글자가 선명하지 않습니다  카메라를 고정하고 다시 촬영해 주세요'] },
+    rawText: '서울 열린약국 / 1회 ?포 / 1일 ?회 / ?일분 / 식후 ?분',
+    groups: [{
+      medicineName: F(null, .31, '시O용 A정', '', { x:.07, y:.275, w:.42, h:.062 }),
+      doseAmount: F(null, .42, '1회 ?포', '', { x:.075, y:.505, w:.20, h:.068 }),
+      doseUnit: F('포', .58, '포', '포', { x:.075, y:.505, w:.20, h:.068 }),
+      frequencyPerDay: F(null, .39, '1일 ?회', '', { x:.515, y:.505, w:.20, h:.068 }),
+      durationDays: F(null, .40, '?일분', '', { x:.075, y:.608, w:.18, h:.068 }),
+      timingCode: F(null, .44, '식후 ?분', '', { x:.515, y:.608, w:.22, h:.068 }),
+      asNeeded: F(false, .90, '', '상시 복용', null), symptom: null, cautions: [],
+    }],
+  },
+  {
+    id: 'SAMPLE_BAG_4', tag: '불면', name: '빛이 반사된 약봉투',
+    desc: '하루 몇 번이 잘 안 읽힘 · 고쳐서 진행',
+    img: 'samples/bag-glare.svg', asNeededBag: false, timingCandidates: [], mask: { x:.07, y:.152, w:.26, h:.056 },
+    quality: { status: 'REVIEW', blur: .14, glare: .48, messages: ['빛이 반사되고 있습니다  약봉투의 각도를 바꿔 주세요'] },
+    rawText: '서울 열린약국 / 시연용 E정\n1회 1정 / 1일 2회(?) / 5일분 / 취침 전\n주의  운전 주의',
+    groups: [{
+      medicineName: F('시연용 E정', .88, '시연용 E정', '시연용 E정', { x:.07, y:.275, w:.42, h:.062 }),
+      doseAmount: F(1, .92, '1회 1정', '1회 1정', { x:.075, y:.505, w:.20, h:.068 }),
+      doseUnit: F('정', .92, '정', '정', { x:.075, y:.505, w:.20, h:.068 }),
+      frequencyPerDay: F(2, .61, '1일 2회', '1일 2회', { x:.515, y:.505, w:.20, h:.068 }),
+      durationDays: F(5, .93, '5일분', '5일', { x:.075, y:.608, w:.18, h:.068 }),
+      timingCode: F('BEDTIME', .89, '취침 전', '취침 전', { x:.515, y:.608, w:.22, h:.068 }),
+      asNeeded: F(false, .98, '', '상시 복용', null), symptom: null, cautions: ['DROWSINESS', 'DRIVING'],
+    }],
+  },
+];
+
+/* ---------------- 상태 ---------------- */
+const STEPS = ['약봉투 읽기', '내용 확인', '안내 문장', '수어 안내', '완료'];
+const FIELD_KEYS = ['medicineName', 'doseAmount', 'doseUnit', 'frequencyPerDay', 'durationDays', 'timingCode'];
+const FIELD_LABELS = { medicineName: '약품명', doseAmount: '한 번에 먹는 양', doseUnit: '단위 (정·포 등)', frequencyPerDay: '하루 몇 번', durationDays: '며칠 동안', timingCode: '언제 먹는지', asNeeded: '증상 있을 때만' };
+const REACTION_LABEL = {
+  PLAY_STARTED: '안내 시작', PLAY_COMPLETED: '끝까지 봤음', REPLAY: '다시 보기',
+  SLOW: '천천히 보기', QUESTION: '질문하기', UNDERSTOOD: '이해했습니다',
+};
+
+let seq = 0;
+const nextId = (p) => `${p}_${String(++seq).padStart(3, '0')}`;
+
+const S = {
+  route: 'login',
+  pharmacy: '서울 열린약국',
+  session: null,
+  highlight: null,
+  approveChecks: { ocrMatchesBag: false, missingFieldsChecked: false, cautionsAppropriate: false, subtitlesChecked: false, finalApproval: false },
+  patientPhase: 'WAITING',
+  player: null,
+  captureCase: 'SAMPLE_BAG_1',
+  /** 지금 시연 중인 약봉투 예시 */
+  caseId: 'SAMPLE_BAG_1',
+  /** 안내 문장 화면의 확인 체크 */
+  confirmed: false,
+  modal: null,
+  /** 주의사항 추가 패널 상태 */
+  addOpen: false,
+  addCat: null,
+  addQuery: '',
+  customText: '',
+  generating: null,
+  focusId: null,
+  /** 이미 해본 예시 */
+  doneCases: [],
+  cameraStream: null,
+  error: null,
+  flash: null,
+};
+
+/* 데모 시계 — 서버 시계를 바꾸지 않고 오프셋만 더한다 (부록 A 2 13번) */
+/* 로컬 파일(file://)이나 저장이 차단된 브라우저에서는 메모리에 보관한다 */
+const MEM = {};
+function store(key, value) {
+  if (value === undefined) delete MEM[key]; else MEM[key] = value;
+  try { value === undefined ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+}
+function load(key, fallback) {
+  if (key in MEM) return MEM[key];
+  try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch (_) { return fallback; }
+}
+const clockOffset = () => load('ksl.offset', 0);
+const setClockOffset = (h) => store('ksl.offset', h);
+const now = () => Date.now() + clockOffset() * 3600000;
+
+function newSession() {
+  return {
+    id: nextId('SESSION_DEMO'), status: 'CAPTURED', bags: [], cards: [],
+    approval: null, avatar: null, reactions: [], shareToken: null,
+    rate: 1, focusCardId: null, imagesPurged: false, createdAt: now(), caseId: S.caseId,
+  };
+}
+
+/* ---------------- 검증 (설계서 10 3 / 15 2) ---------------- */
+const levelOf = (f) => {
+  if (f.value === null || f.value === '' || f.value === undefined) return 'MISSING';
+  if (f.verified) return 'PHARMACIST';
+  if (f.confidence >= TH.high) return 'HIGH';
+  if (f.confidence >= TH.review) return 'REVIEW';
+  return 'LOW';
+};
+const requiredFor = (g) => (g.asNeeded.value ? ['doseAmount', 'doseUnit'] : ['doseAmount', 'doseUnit', 'frequencyPerDay', 'durationDays', 'timingCode']);
+
+function validate(session) {
+  const out = [];
+  for (const bag of session.bags) {
+    if (bag.quality.status === 'RETAKE') out.push({ sev: 'BLOCKING', code: 'IMAGE_QUALITY', bagId: bag.bagId, field: null, msg: bag.quality.messages[0] || '약봉투를 다시 찍어 주세요.' });
+    else if (bag.quality.status === 'REVIEW') out.push({ sev: 'WARNING', code: 'IMAGE_QUALITY', bagId: bag.bagId, field: null, msg: bag.quality.messages[0] || '사진이 잘 찍혔는지 확인해 주세요.' });
+
+    for (const g of bag.groups) {
+      for (const key of requiredFor(g)) {
+        const f = g[key], lv = levelOf(f);
+        if (lv === 'MISSING') out.push({ sev: 'BLOCKING', code: 'MISSING_REQUIRED', bagId: bag.bagId, gid: g.gid, field: key, msg: `${FIELD_LABELS[key]}을(를) 약봉투를 보고 입력해 주세요.` });
+        else if (lv === 'LOW') out.push({ sev: 'BLOCKING', code: 'LOW_CONFIDENCE', bagId: bag.bagId, gid: g.gid, field: key, msg: `${FIELD_LABELS[key]}이(가) 잘 읽히지 않았습니다. 약봉투와 비교해 확인해 주세요.` });
+        else if (lv === 'REVIEW') out.push({ sev: 'WARNING', code: 'NEEDS_REVIEW', bagId: bag.bagId, gid: g.gid, field: key, msg: `${FIELD_LABELS[key]}을(를) 약봉투와 한 번 비교해 주세요.` });
+      }
+      if (!g.medicineName.value) out.push({ sev: 'WARNING', code: 'NO_MEDICINE_NAME', bagId: bag.bagId, gid: g.gid, field: 'medicineName', msg: '약품명이 적혀 있지 않은 약봉투입니다. 먹는 방법만 안내합니다.' });
+    }
+  }
+  return out;
+}
+const blocking = (issues) => issues.filter((i) => i.sev === 'BLOCKING');
+
+/* ---------------- 안내카드 생성 (설계서 12) ---------------- */
+const fmtAmount = (a, u) => (a === 0.5 ? (u === '정' || u === '알' ? '반 알' : `반 ${u}`) : `${a}${u}`);
+const mealsLabel = (n) => (n === 3 ? '아침, 점심, 저녁' : n === 2 ? '아침, 저녁' : n === 1 ? '하루 한 번' : null);
+
+function composeCards(session) {
+  const prev = new Map(session.cards.map((c) => [c.text, c]));
+  const cards = [];
+  const push = (type, text, gloss, opts = {}) => cards.push({
+    id: nextId('CARD'), type, text, gloss,
+    required: opts.required !== false, selected: true,
+    source: opts.source || 'BAG_OCR', authored: !!opts.authored, order: cards.length,
+  });
+
+  push('INTRO', '지금부터 약을 먹는 방법을 안내하겠습니다.', ['지금', '약', '먹다', '방법', '설명'], { source: 'REVIEWED_PHRASE_DB' });
+
+  /* 같은 복용법을 가진 약은 한 문장으로 묶고, 다른 약은 약품명을 밝혀 분리한다 */
+  const regular = [];
+  for (const bag of session.bags) for (const g of bag.groups) if (!g.asNeeded.value) regular.push(g);
+  const buckets = new Map();
+  for (const g of regular) {
+    const key = [g.doseAmount.value, g.doseUnit.value, g.frequencyPerDay.value, g.durationDays.value, g.timingCode.value].join('|');
+    buckets.set(key, [...(buckets.get(key) || []), g]);
+  }
+  const named = buckets.size > 1;
+  const timingSeen = new Set();
+
+  for (const bucket of buckets.values()) {
+    const g = bucket[0];
+    const a = g.doseAmount.value, u = g.doseUnit.value, t = g.frequencyPerDay.value, d = g.durationDays.value, tc = g.timingCode.value;
+    if (a === null || u === null || t === null || d === null) continue;
+    const amountText = fmtAmount(a, u);
+    const names = bucket.map((x) => x.medicineName.value).filter(Boolean).join(', ');
+
+    if (named && names) push('DOSING', `${names}은 하루 ${t}번, 한 번에 ${amountText}씩, ${d}일 동안 드세요.`, [names, '하루', `${t}번`, '한번', amountText, `${d}일`, '먹다']);
+    else push('DOSING', `하루 ${t}번, 한 번에 ${amountText}씩, ${d}일 동안 드세요.`, ['하루', `${t}번`, '한번', amountText, `${d}일`, '먹다']);
+
+    if (tc && !timingSeen.has(tc + t)) {
+      timingSeen.add(tc + t);
+      const meals = mealsLabel(t);
+      if ((tc === 'AFTER_MEAL_30' || tc === 'BEFORE_MEAL_30') && t === 3) {
+        const text = tc === 'AFTER_MEAL_30' ? `${meals} 식사 후 30분에 드세요.` : `${meals} 식사 전 30분에 드세요.`;
+        push('TIMING', text, ['아침', '점심', '저녁', '밥', '먹다', '30분', '지나다', '먹다']);
+      } else {
+        push('TIMING', `${T[tc]}에 드세요.`, ['밥', '먹다', '때', T[tc]]);
+      }
+      push('DURATION', `이 약은 ${d}일 동안 드세요.`, ['이', '약', `${d}일`, '동안', '먹다'], { required: false });
+    }
+  }
+
+  for (const bag of session.bags) for (const g of bag.groups) {
+    if (!g.asNeeded.value) continue;
+    const a = g.doseAmount.value, u = g.doseUnit.value;
+    if (a === null || u === null) continue;
+    const amountText = fmtAmount(a, u);
+    const sym = g.symptom || '증상';
+    push('AS_NEEDED', `따로 포장된 약은 ${sym}이 있을 때만 한 번에 ${amountText} 드세요.`, ['따로', '약', sym, '있다', '때', amountText, '먹다']);
+  }
+
+  const seenC = new Set();
+  for (const bag of session.bags) for (const g of bag.groups) for (const cid of g.cautions) {
+    if (seenC.has(cid)) continue;
+    seenC.add(cid);
+    const c = CAUTIONS[cid];
+    if (c) push('CAUTION', c.text, c.gloss, { required: false, selected: true, source: 'REVIEWED_PHRASE_DB' });
+  }
+
+  push('CLOSING', '궁금한 점이 있으면 약사에게 질문해 주세요.', ['궁금하다', '있다', '약사', '질문', '하다'], { source: 'REVIEWED_PHRASE_DB' });
+
+  const seenText = new Set();
+  return cards.filter((c) => (seenText.has(c.text) ? false : (seenText.add(c.text), true)))
+    .map((c, i) => {
+      const p = prev.get(c.text);
+      return { ...c, order: i, selected: p ? p.selected : c.selected };
+    });
+}
+const selectedCards = (s) => s.cards.filter((c) => c.selected).sort((a, b) => a.order - b.order);
+
+/* ---------------- 액션 ---------------- */
+/**
+ * 안내 문장을 추가한다. 마무리 문장 앞에 넣는다.
+ * 검수 문구는 표준 안내 문구로, 직접 입력한 문장은 약사님이 쓴 문장으로 표시한다.
+ */
+function addGuidanceCard(text, gloss, source) {
+  const s = S.session;
+  const trimmed = text.trim();
+  if (trimmed === '') return false;
+  if (s.cards.some((c) => c.text === trimmed)) return false;
+  const closing = s.cards.find((c) => c.type === 'CLOSING');
+  const order = closing ? closing.order - 0.5 : s.cards.length;
+  s.cards.push({
+    id: nextId('CARD'),
+    type: source === 'PHARMACIST_INPUT' ? 'PHARMACIST_NOTE' : 'CAUTION',
+    text: trimmed,
+    gloss,
+    required: false,
+    selected: true,
+    source,
+    authored: source === 'PHARMACIST_INPUT',
+    order,
+  });
+  s.cards = s.cards.sort((a, b) => a.order - b.order).map((c, i) => ({ ...c, order: i }));
+  return true;
+}
+
+/** 예시를 골라 새 안내를 시작한다 (읽기 화면부터) */
+function startCase(caseId) {
+  const sample = SAMPLES.find((x) => x.id === caseId) || SAMPLES[0];
+  S.caseId = sample.id;
+  S.captureCase = sample.id;
+  S.confirmed = false;
+  S.session = newSession();
+  S.session.caseId = sample.id;
+  S.highlight = null;
+  S.activeBag = 0;
+  addBag(sample, null, false);
+  go('read');
+}
+
+function addBag(sample, imageOverride, navigate = true) {
+  const s = S.session;
+  const bagId = nextId('BAG');
+  const bag = {
+    bagId, label: sample.name, tag: sample.tag, img: imageOverride || sample.img,
+    captured: !!imageOverride, quality: sample.quality, rawText: sample.rawText, mask: sample.mask,
+    asNeededBag: sample.asNeededBag, timingCandidates: sample.timingCandidates,
+    groups: sample.groups.map((g, i) => {
+      const copy = { gid: `${bagId}_G${i + 1}`, symptom: g.symptom, cautions: [...g.cautions] };
+      for (const k of [...FIELD_KEYS, 'asNeeded']) copy[k] = { ...g[k] };
+      return copy;
+    }),
+  };
+  s.bags.push(bag);
+  s.status = blocking(validate(s)).length ? 'NEEDS_REVIEW' : 'OCR_COMPLETE';
+  if (navigate) go('read');
+}
+
+
+function patchField(gid, key, raw) {
+  const s = S.session;
+  for (const bag of s.bags) for (const g of bag.groups) {
+    if (g.gid !== gid) continue;
+    let v = raw;
+    if (['doseAmount', 'frequencyPerDay', 'durationDays'].includes(key)) {
+      const n = Number(raw);
+      v = raw === '' || raw === null || !Number.isFinite(n) ? null : n;
+    }
+    if (key === 'medicineName' && v === '') v = null;
+    if (key === 'doseUnit' && v === '') v = null;
+    /* 약사 직접입력은 신뢰도 표시 대신 약사 책임 표시를 쓴다 */
+    g[key] = { ...g[key], value: v, confidence: 1, verified: true, source: 'PHARMACIST_INPUT', normalizedText: v === null ? '' : String(v) };
+  }
+  s.status = blocking(validate(s)).length ? 'NEEDS_REVIEW' : 'OCR_COMPLETE';
+}
+
+function verifyField(gid, key) {
+  for (const bag of S.session.bags) for (const g of bag.groups) if (g.gid === gid) g[key] = { ...g[key], verified: true };
+  S.session.status = blocking(validate(S.session)).length ? 'NEEDS_REVIEW' : 'OCR_COMPLETE';
+}
+
+function approve() {
+  const s = S.session;
+  s.approval = { at: now(), checks: { ...S.approveChecks }, version: 'GUIDANCE_V1' };
+  s.status = 'APPROVED';
+  /* 문장마다 샘플 수어영상을 무작위 배정하고 승인본에 저장한다 */
+  let prevIdx = -1;
+  s.avatar = {
+    jobId: nextId('AVATAR_JOB'), status: 'READY', provider: 'mock', cached: true,
+    segments: selectedCards(s).map((c) => {
+      let i = Math.floor(Math.random() * CLIPS.length);
+      if (i === prevIdx) i = (i + 1) % CLIPS.length;
+      prevIdx = i;
+      return { cardId: c.id, url: CLIPS[i].url, ms: CLIPS[i].ms };
+    }),
+  };
+  S.patientPhase = 'WAITING';
+}
+
+function completeSession() {
+  const s = S.session;
+  const token = [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(36)).join('').slice(0, 32);
+  const issuedAt = now();
+  const expiresAt = issuedAt + QR_TTL_HOURS * 3600000;
+  /* 재열람 스냅샷: 승인된 자막과 재생 자산만 담는다. 환자 식별정보·약봉투 이미지는 담지 않는다 */
+  store(`ksl.share.${token}`, {
+    status: 'ACTIVE', issuedAt, expiresAt, version: 'GUIDANCE_V1', pharmacy: S.pharmacy,
+    approvedAt: s.approval.at, accessCount: 0,
+    cards: selectedCards(s).map((c) => ({ id: c.id, text: c.text, gloss: c.gloss })),
+    segments: s.avatar.segments,
+  });
+  s.shareToken = token;
+  s.bags = s.bags.map((b) => ({ ...b, img: '', purged: true }));
+  s.imagesPurged = true;
+  s.status = 'QR_ACTIVE';
+  s.completedAt = issuedAt;
+}
+
+function shareRecord(token) { return load(`ksl.share.${token}`, null); }
+function readShare(token) {
+  const rec = shareRecord(token);
+  if (!rec) return { ok: false, reason: 'NOT_FOUND', msg: '이 안내는 더 이상 이용할 수 없습니다' };
+  if (rec.status === 'REVOKED') return { ok: false, reason: 'REVOKED', msg: '이 안내는 더 이상 이용할 수 없습니다' };
+  if (now() >= rec.expiresAt) return { ok: false, reason: 'EXPIRED', msg: '이 안내는 만료되었습니다  약국에 문의해 주세요' };
+  rec.accessCount += 1;
+  store(`ksl.share.${token}`, rec);
+  return { ok: true, rec };
+}
+function revokeShare(token) {
+  const rec = shareRecord(token);
+  if (!rec) return;
+  /* 즉시 폐기: 토큰 무효화와 재생 콘텐츠 제거 */
+  store(`ksl.share.${token}`, { ...rec, status: 'REVOKED', cards: [], segments: [], purgedAt: now() });
+  if (S.session) S.session.status = 'QR_EXPIRED';
+}
+
+const pad = (n) => String(n).padStart(2, '0');
+function expiryKorean(ms) {
+  const d = new Date(ms);
+  return `${d.getFullYear()}년 ${pad(d.getMonth() + 1)}월 ${pad(d.getDate())}일 ${pad(d.getHours())}시 ${pad(d.getMinutes())}분`;
+}
+const timeKo = (ms) => new Date(ms).toLocaleTimeString('ko-KR');
+const dateKo = (ms) => new Date(ms).toLocaleString('ko-KR');
+
+/* ---------------- 렌더 도우미 ---------------- */
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const EMPH = /(\d+(?:\.\d+)?\s*(?:번|회|포|정|캡슐|알|일|분|시간|mL)?|반 알|하루|아침|점심|저녁|식후|식전|취침\s*전|공복|필요할\s*때|시연용\s*[A-Z][가-힣A-Za-z]*)/g;
+const emphasize = (text) => esc(text).replace(EMPH, (m) => `<em class="hi">${m}</em>`);
+
+const LEVEL_UI = {
+  HIGH: { cls: 'ok', icon: '✓', label: '잘 읽혔어요' },
+  REVIEW: { cls: 'warn', icon: '!', label: '한 번 확인' },
+  LOW: { cls: 'bad', icon: '✕', label: '다시 확인' },
+  MISSING: { cls: 'bad', icon: '✎', label: '직접 입력' },
+  PHARMACIST: { cls: 'brand', icon: '✓', label: '내가 확인함' },
+};
+function badge(f) {
+  const lv = levelOf(f), ui = LEVEL_UI[lv];
+  const num = ['HIGH', 'REVIEW', 'LOW'].includes(lv)
+    ? ` <span class="mono" style="font-weight:400">${Math.round(f.confidence * 100)}%</span>` : '';
+  return `<span class="chip ${ui.cls}"><span aria-hidden="true">${ui.icon}</span>${ui.label}${num}</span>`;
+}
+
+function stepIndex(status) {
+  if (status === 'CAPTURED') return 0;
+  if (status === 'OCR_COMPLETE' || status === 'NEEDS_REVIEW') return 1;
+  if (status === 'VERIFIED' || status === 'COMPOSED') return 2;
+  if (status === 'APPROVED' || status === 'PLAYING' || status === 'QUESTION') return 3;
+  return 4;
+}
+
+function shell(stepIdx, head, body, footer) {
+  return `
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-row">
+        <span class="brandmark">수어 복약지도</span>
+        <span class="pharmacy">${esc(S.pharmacy)}</span>
+        <span class="chip warn"><span aria-hidden="true">⚠</span>시연용 예시</span>
+        <span class="spacer"></span>
+        <span class="chip">약봉투 읽기 예시</span>
+        <span class="chip">수어영상 예시</span>
+      </div>
+      <ol class="steps">
+        ${STEPS.map((s, i) => `<li><span class="step" data-state="${i < stepIdx ? 'done' : i === stepIdx ? 'now' : 'todo'}"><span aria-hidden="true">${i < stepIdx ? '✓' : i + 1}</span>${s}</span>${i < STEPS.length - 1 ? '<span class="step-sep" aria-hidden="true">›</span>' : ''}</li>`).join('')}
+      </ol>
+    </header>
+    <main class="page">
+      <div class="page-head" style="margin-bottom:14px">${head}</div>
+      ${S.error ? `<div class="notice bad" style="margin-bottom:12px"><span aria-hidden="true">✕</span><span>${esc(S.error)}</span></div>` : ''}
+      ${S.flash ? `<div class="notice ok" style="margin-bottom:12px"><span aria-hidden="true">✓</span><span>${esc(S.flash)}</span></div>` : ''}
+      ${body}
+    </main>
+    ${footer ? `<div class="actionbar"><div class="actionbar-row">${footer}</div></div>` : ''}
+    ${S.modal ? `<div class="modal-back" data-act="modal-close" role="dialog" aria-modal="true" aria-label="${esc(S.modal.title)}">
+      <div class="modal-box" data-stop="1">
+        <h3><span aria-hidden="true">${S.modal.focus ? '☑' : '!'}</span> ${esc(S.modal.title)}</h3>
+        ${S.modal.body.map((t) => `<p>${esc(t)}</p>`).join('')}
+        <div class="modal-acts">
+          <button class="btn ghost" data-act="modal-close">닫기</button>
+          ${S.modal.focus ? `<button class="btn" data-act="modal-focus" data-focus="${esc(S.modal.focus)}">확인란으로 이동</button>` : ''}
+        </div>
+      </div>
+    </div>` : ''}
+    <p class="foot">이 서비스는 약사님이 확인하고 보낸 내용만 방문자에게 전달합니다. 병명을 짐작하거나 복용법을 스스로 만들지 않습니다. 수어 안내만으로 복약지도 의무가 대신되지는 않습니다.</p>
+  </div>`;
+}
+
+/* ---------------- 화면: 로그인 ---------------- */
+function viewLogin() {
+  return `
+  <main class="page" style="max-width:640px;display:flex;flex-direction:column;justify-content:center;min-height:100%;gap:18px">
+    <div>
+      <p style="margin:0;color:var(--brand);font-weight:700;font-size:13px">대한약사회 공용플랫폼 데모</p>
+      <h1 style="margin:6px 0 0;font-size:clamp(24px,4vw,32px);line-height:1.3;letter-spacing:-.02em;text-wrap:balance">약봉투를 찍으면<br>수어로 복약안내</h1>
+      <p style="margin:10px 0 0;color:var(--ink-soft)">약봉투를 촬영하면 복약정보를 읽어 드립니다. 약사님이 확인하고 보낸 내용만 농인 방문자에게 수어와 자막으로 전달되고, 방문자는 48시간 동안 QR로 다시 볼 수 있습니다.</p>
+    </div>
+    <div class="notice warn"><span aria-hidden="true">⚠</span><span>시연용 예시 자료입니다. 실제 처방이나 의약품 정보가 아닙니다.</span></div>
+    <div class="card">
+      <div class="card-body" style="display:grid;gap:12px">
+        <div style="display:grid;gap:6px">
+          <label for="pid" style="font-weight:700;font-size:13px">약사 아이디</label>
+          <input id="pid" class="text-input" value="demo" autocomplete="username">
+        </div>
+        <div style="display:grid;gap:6px">
+          <label for="ppw" style="font-weight:700;font-size:13px">비밀번호</label>
+          <input id="ppw" class="text-input" type="password" value="demo" autocomplete="current-password">
+        </div>
+        <button class="btn" data-act="login">로그인</button>
+        <button class="btn ghost" data-act="login">데모계정으로 바로 시작</button>
+      </div>
+    </div>
+    <p style="margin:0;text-align:center;font-size:12px;color:var(--ink-soft)">시연용 화면이라 아이디·비밀번호는 확인하지 않습니다. 방문자는 가입할 필요가 없고, 개인정보도 저장하지 않습니다.</p>
+  </main>`;
+}
+
+/* ---------------- 화면: 대시보드 ---------------- */
+function viewDashboard() {
+  return shell(0,
+    `<h1>농인 방문자를 위한 새 수어 복약안내를 시작합니다</h1>
+     <p>약봉투가 없는 자리에서는 준비된 약봉투 예시로 촬영 단계를 대신 보여드릴 수 있습니다.</p>`,
+    `<div class="grid-2 wide-left">
+      <section class="card">
+        <div class="card-body" style="display:grid;gap:12px">
+          <h2 style="margin:0;font-size:17px">새 복약안내</h2>
+          <p style="margin:0;color:var(--ink-soft);font-size:13.5px">방문자에게 수어 안내가 필요한지 여쭤본 뒤 시작해 주세요. 방문자 가입은 필요하지 않습니다.</p>
+          <button class="btn" data-act="new-session"><span aria-hidden="true">📷</span>새 복약안내 시작</button>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-body" style="display:grid;gap:10px">
+          <h2 style="margin:0;font-size:17px">이렇게 보여주세요</h2>
+          <ol style="margin:0;padding-left:20px;display:grid;gap:6px;font-size:13.5px;color:var(--ink-soft)">
+            <li>약봉투 스캔 화면을 보여주며 "촬영하면 이렇게 읽어옵니다"라고 설명</li>
+            <li>오른쪽에서 <strong>약봉투 예시</strong>를 골라 읽은 내용 확인</li>
+            <li>빨강·노랑 항목 확인 → 안내 문장 고르기 → 확인 항목 체크 → 보내기</li>
+            <li><strong>수어 설명 영상 보기</strong>로 영상을 확인한 뒤 패드를 방문자에게 보여주기</li>
+            <li>안내 마치고 <strong>48시간 다시보기 QR</strong> 만들기</li>
+          </ol>
+          <div class="tabs">
+            <button class="btn ghost sm" data-act="route" data-route="gallery">약봉투 예시 목록 보기</button>
+            <button class="btn ghost sm" data-act="route" data-route="print">약봉투 예시 인쇄하기</button>
+          </div>
+        </div>
+      </section>
+    </div>`,
+    ''
+  );
+}
+
+/* ---------------- 화면: 촬영 · 인식 ---------------- */
+/* 각 케이스가 약사 확인 없이 바로 안내 가능한지 미리 계산한다 */
+function sampleNeedsReview(sample) {
+  if (sample.quality.status === 'RETAKE') return true;
+  return sample.groups.some((g) => {
+    const keys = g.asNeeded.value ? ['doseAmount', 'doseUnit'] : ['doseAmount', 'doseUnit', 'frequencyPerDay', 'durationDays', 'timingCode'];
+    return keys.some((k) => {
+      const f = g[k];
+      return f.value === null || f.value === '' || f.confidence < TH.review;
+    });
+  });
+}
+const NEEDS_REVIEW = new Map(SAMPLES.map((x) => [x.id, sampleNeedsReview(x)]));
+
+function viewRead() {
+  const s = S.session;
+  const bag = s.bags[s.bags.length - 1];
+  if (bag === undefined) return viewGallery();
+  const sample = SAMPLES.find((x) => x.id === s.caseId) || SAMPLES[0];
+  const g = bag.groups[0];
+  const rows = [
+    ['한 번에 먹는 양', g.doseAmount.value === null ? '못 읽었어요' : `${g.doseAmount.value}${g.doseUnit.value || ''}`, g.doseAmount],
+    ['하루 몇 번', g.frequencyPerDay.value === null ? '못 읽었어요' : `${g.frequencyPerDay.value}번`, g.frequencyPerDay],
+    ['며칠 동안', g.durationDays.value === null ? '못 읽었어요' : `${g.durationDays.value}일`, g.durationDays],
+    ['언제 먹는지', g.timingCode.value === null ? '못 읽었어요' : T[g.timingCode.value], g.timingCode],
+  ];
+  const readCount = rows.filter(([, , f]) => f.value !== null).length;
+  const needs = NEEDS_REVIEW.get(sample.id);
+
+  return shell(0,
+    `<h1>약봉투를 촬영하면 복약정보를 읽어옵니다</h1>
+     <p>약봉투를 카운터에 놓고 촬영하면 한 번에 먹는 양과 하루 몇 번, 며칠 동안, 언제 먹는지를 자동으로 읽어옵니다.
+        아래는 <strong>${esc(sample.tag)} · ${esc(sample.name)}</strong> 예시로 보여드리는 결과입니다.</p>`,
+    `<div class="grid-2 wide-left">
+      <section class="card" style="overflow:hidden">
+        <div class="card-head">
+          <h2>약봉투 스캔 화면</h2>
+          <span class="chip brand">${esc(sample.tag)}</span>
+          <span class="spacer"></span>
+          <span class="chip warn"><span aria-hidden="true">⚠</span>시연용 약봉투 스캔 결과(예시)</span>
+        </div>
+        <div class="scanbox">
+          <span class="scanflag">${readCount === 0 ? '약봉투를 찍었어요' : readCount === rows.length ? '약봉투를 다 읽었어요' : `${readCount}개 항목을 읽었어요`}</span>
+          <img src="${esc(bag.img || sample.img)}" alt="${esc(sample.name)} 스캔 화면">
+          <span class="corner c-tl"></span><span class="corner c-tr"></span>
+          <span class="corner c-bl"></span><span class="corner c-br"></span>
+          <span class="scanline" aria-hidden="true"></span>
+        </div>
+        <div class="card-body" style="display:grid;gap:12px">
+          <div>
+            <h3 style="margin:0 0 6px;font-size:13px">약봉투에서 읽은 내용</h3>
+            <dl class="kv">
+              ${rows.map(([label, value, f]) => `<div><dt>${label}</dt><dd>${esc(value)} ${badge(f)}</dd></div>`).join('')}
+            </dl>
+          </div>
+          ${bag.quality.messages.length ? `<div class="notice ${bag.quality.status === 'RETAKE' ? 'bad' : 'warn'}"><span aria-hidden="true">${bag.quality.status === 'RETAKE' ? '✕' : '!'}</span><span>${esc(bag.quality.messages[0])}</span></div>` : ''}
+          ${readCount === 0
+            ? `<div class="notice bad"><span aria-hidden="true">✕</span><span>글자를 읽지 못했습니다. 다음 화면에서 <strong>약봉투를 보고 직접 입력</strong>해 주세요. 직접 입력해도 같은 방식으로 수어 안내를 만들 수 있습니다.</span></div>`
+            : needs
+              ? `<div class="notice bad"><span aria-hidden="true">✕</span><span>잘 읽히지 않은 항목이 있습니다. 다음 화면에서 <strong>직접 확인하고 고쳐</strong> 주세요.</span></div>`
+              : `<div class="notice ok"><span aria-hidden="true">✓</span><span>필요한 복약정보를 모두 읽었습니다. 다음 화면에서 내용을 확인해 주세요.</span></div>`}
+          <details>
+            <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-soft)">실제 약봉투 사진으로 해보기</summary>
+            <div style="display:grid;gap:8px;margin-top:10px">
+              <p style="margin:0;font-size:12px;color:var(--ink-soft)">
+                인쇄한 시연용 약봉투를 직접 찍어 보여드릴 수 있습니다. 휴대전화·태블릿에서는 <strong>휴대기기 카메라로 촬영</strong>을,
+                PC에서는 <strong>사진 불러오기</strong>를 눌러 주세요. 찍은 사진이 약봉투 자리에 들어갑니다.
+              </p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <button class="btn ghost sm" data-act="mobile-shot"><span aria-hidden="true">📱</span>휴대기기 카메라로 촬영</button>
+                <button class="btn ghost sm" data-act="pick-photo"><span aria-hidden="true">🖼</span>사진 불러오기</button>
+                <button class="btn ghost sm" data-act="route" data-route="print"><span aria-hidden="true">🖨</span>약봉투 예시 인쇄</button>
+              </div>
+              <input id="camfile" type="file" accept="image/*" capture="environment" hidden data-act="photo-input">
+              <input id="photofile" type="file" accept="image/*" hidden data-act="photo-input">
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="card" style="align-self:start">
+        <div class="card-head"><h2>이렇게 진행됩니다</h2></div>
+        <div class="card-body" style="display:grid;gap:10px">
+          <ol style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:13.5px">
+            <li><strong>읽은 내용 확인</strong> — 약봉투와 비교해 고칠 곳을 고칩니다</li>
+            <li><strong>안내 문장 고르기</strong> — 방문자에게 보여줄 문장을 정합니다</li>
+            <li><strong>수어영상 보기</strong> — 문장마다 수어영상과 자막이 함께 재생됩니다</li>
+            <li><strong>안내 마치기</strong> — 48시간 동안 다시 볼 수 있는 QR을 드립니다</li>
+          </ol>
+          <button class="btn" data-act="route" data-route="review" style="width:100%">
+            안내 내용 확인하기 <span aria-hidden="true">→</span>
+          </button>
+          <button class="btn ghost" data-act="route" data-route="gallery" style="width:100%">다른 약봉투 예시로 바꾸기</button>
+          <p style="margin:0;font-size:12px;color:var(--ink-soft)">
+            약봉투에 적힌 내용만 사용합니다. 병명으로 복용법을 짐작하거나 없는 정보를 만들지 않습니다.
+          </p>
+        </div>
+      </section>
+     </div>`,
+    `<span style="margin-right:auto;font-weight:700;font-size:13px">약봉투 ${s.bags.length}장 · ${esc(sample.tag)} 예시</span>
+     <button class="btn" data-act="route" data-route="review">안내 내용 확인하기 <span aria-hidden="true">→</span></button>`
+  );
+}
+
+/* ---------------- 화면: 약봉투 예시 목록 ---------------- */
+function viewGallery() {
+  const doneIds = S.doneCases || [];
+  return shell(S.session && S.session.shareToken ? 4 : 0,
+    `<h1>다른 약봉투 예시도 해보세요</h1>
+     <p>약봉투는 약국마다 양식이 다릅니다. 잘 읽히는 약봉투부터 글자를 거의 읽지 못하는 약봉투까지,
+        각각 어떻게 안내가 만들어지는지 차례로 보실 수 있습니다.</p>`,
+    `<section class="card">
+      <ul class="caselist">
+        ${SAMPLES.map((x) => {
+          const needs = NEEDS_REVIEW.get(x.id);
+          const done = doneIds.includes(x.id);
+          return `
+          <li>
+            <img class="casethumb" src="${x.img}" alt="">
+            <div class="casemeta">
+              <p class="casename">
+                <span class="chip brand">${esc(x.tag)}</span> ${esc(x.name)}
+                ${done ? '<span class="chip ok"><span aria-hidden="true">✓</span>해봤어요</span>' : ''}
+              </p>
+              <p class="casedesc">${esc(x.desc)}</p>
+              <p style="margin-top:6px">
+                ${needs
+                  ? '<span class="chip warn"><span aria-hidden="true">!</span>약사가 직접 확인·입력하는 흐름</span>'
+                  : '<span class="chip ok"><span aria-hidden="true">✓</span>바로 안내까지 진행되는 흐름</span>'}
+              </p>
+            </div>
+            <button class="btn sm" data-act="start-case" data-id="${x.id}">이 예시로 해보기</button>
+          </li>`;
+        }).join('')}
+      </ul>
+      <div class="card-body" style="border-top:1px solid var(--line)">
+        <p style="margin:0;font-size:12px;color:var(--ink-soft)">
+          어떤 예시를 고르든 <strong>읽기 → 확인 → 안내 문장 → 수어영상 → 완료</strong> 순서는 같습니다.
+          글자를 읽지 못한 약봉투는 확인 화면에서 직접 입력해 같은 안내를 만들 수 있습니다.
+        </p>
+      </div>
+    </section>`,
+    `<button class="btn ghost" data-act="route" data-route="dashboard">처음 화면으로</button>`
+  );
+}
+
+/* ---------------- 화면: OCR 검토 ---------------- */
+function viewReview() {
+  const s = S.session;
+  const issues = validate(s);
+  const bags = s.bags;
+  const bag = bags[S.activeBag ?? 0] || bags[0];
+  if (!bag) return viewScan();
+  const blocks = blocking(issues), warns = issues.filter((i) => i.sev === 'WARNING');
+  const hl = S.highlight;
+
+  return shell(1,
+    `<h1>읽은 내용을 확인해 주세요</h1>
+     <p>빨간색·노란색 항목을 약봉투와 비교해 주세요. 항목을 누르면 약봉투에서 그 부분을 표시해 드리고, 모든 값은 직접 고칠 수 있습니다.</p>`,
+    `${bags.length > 1 ? `<div class="tabs" style="margin-bottom:12px">${bags.map((b, i) => `<button class="btn ${i === (S.activeBag ?? 0) ? '' : 'ghost'} sm" data-act="set-bag" data-i="${i}">${esc(b.label)}</button>`).join('')}</div>` : ''}
+     <div class="grid-2">
+      <section class="card" style="overflow:hidden;align-self:start">
+        <div class="card-head">
+          <h2 style="font-size:14px">${esc(bag.label)}</h2>
+          ${bag.tag ? `<span class="chip brand">${esc(bag.tag)}</span>` : ''}
+          <span class="chip ${bag.quality.status === 'PASS' ? 'ok' : bag.quality.status === 'REVIEW' ? 'warn' : 'bad'}"><span aria-hidden="true">${bag.quality.status === 'PASS' ? '✓' : bag.quality.status === 'REVIEW' ? '!' : '✕'}</span>${bag.quality.status === 'PASS' ? '잘 찍혔어요' : bag.quality.status === 'REVIEW' ? '조금 흐려요' : '다시 찍어 주세요'}</span>
+          ${bag.asNeededBag ? '<span class="chip brand"><span aria-hidden="true">◆</span>필요시약</span>' : ''}
+          <span class="spacer"></span>
+          <span style="font-size:11px;color:var(--ink-soft)">사진 상태 · 흐림 ${Math.round(bag.quality.blur * 100)}% · 빛 반사 ${Math.round(bag.quality.glare * 100)}%</span>
+        </div>
+        <div class="bagwrap">
+          ${bag.img ? `<img src="${esc(bag.img)}" alt="${esc(bag.label)} 약봉투 사진">
+            ${bag.mask ? `<div class="mask" style="left:${bag.mask.x * 100}%;top:${bag.mask.y * 100}%;width:${bag.mask.w * 100}%;height:${bag.mask.h * 100}%">이름은 가립니다</div>` : ''}
+            ${hl ? `<div class="hl" style="left:${hl.x * 100}%;top:${hl.y * 100}%;width:${hl.w * 100}%;height:${hl.h * 100}%"></div>` : ''}`
+          : `<div style="padding:60px 16px;text-align:center;color:var(--ink-soft);font-size:13px">안내를 마쳐서 약봉투 사진을 지웠습니다.</div>`}
+        </div>
+        ${bag.quality.messages.length ? `<div class="notice ${bag.quality.status === 'RETAKE' ? 'bad' : 'warn'}" style="border-radius:0"><span aria-hidden="true">${bag.quality.status === 'RETAKE' ? '✕' : '!'}</span><span>${esc(bag.quality.messages[0])}</span></div>` : ''}
+        ${bag.captured ? `<div class="notice brand" style="border-radius:0;font-size:12px"><span aria-hidden="true">ℹ</span><span>직접 찍은 사진입니다. 표시 위치가 조금 다르게 보일 수 있습니다.</span></div>` : ''}
+        <div class="card-body"><details><summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--ink-soft)">약봉투에서 읽은 글자 보기</summary><pre class="raw" style="margin-top:8px">${esc(bag.rawText || '(읽어온 글자가 없습니다)')}</pre></details></div>
+      </section>
+
+      <div style="display:grid;gap:12px">
+        ${bag.groups.map((g) => `
+          <section class="card">
+            <div class="card-head"><h2>${g.asNeeded.value ? '증상 있을 때 먹는 약' : '정해진 시간에 먹는 약'}</h2>${g.medicineName.value ? `<span class="chip">${esc(g.medicineName.value)}</span>` : ''}</div>
+            <div class="card-body" style="display:grid;gap:10px">
+              ${FIELD_KEYS.map((key) => {
+                const f = g[key], lv = levelOf(f);
+                const optional = key === 'medicineName' || (g.asNeeded.value && ['frequencyPerDay', 'durationDays', 'timingCode'].includes(key));
+                const showCandidates = key === 'timingCode' && f.value === null && bag.timingCandidates.length > 0;
+                return `
+                <div class="field" data-level="${lv}" data-hl="${f.bbox ? esc(JSON.stringify(f.bbox)) : ''}">
+                  <div class="field-top">
+                    <label for="${g.gid}-${key}">${FIELD_LABELS[key]}${optional ? '' : ' <span class="req" title="반드시 확인해야 하는 항목">*</span>'}</label>
+                    <span style="display:flex;gap:8px;align-items:center">
+                      ${badge(f)}
+                      ${['HIGH', 'REVIEW'].includes(lv) ? `<button class="link" data-act="verify" data-gid="${g.gid}" data-key="${key}">약봉투와 같아요</button>` : ''}
+                    </span>
+                  </div>
+                  ${showCandidates ? `
+                    <div class="notice brand" style="display:block">
+                      <p style="margin:0 0 6px;font-size:12px;font-weight:700">약봉투에 보기만 인쇄되어 있어 무엇이 표시됐는지 읽을 수 없습니다. 약봉투에 표시된 것을 골라 주세요.</p>
+                      <div class="tabs">${bag.timingCandidates.map((c) => `<button class="btn ghost sm" data-act="patch" data-gid="${g.gid}" data-key="timingCode" data-value="${c}">${T[c]}</button>`).join('')}</div>
+                    </div>` : ''}
+                  ${key === 'timingCode'
+                    ? `<select id="${g.gid}-${key}" data-act="patch-input" data-gid="${g.gid}" data-key="${key}">
+                         <option value="">복용시점 선택</option>
+                         ${Object.keys(T).map((c) => `<option value="${c}" ${f.value === c ? 'selected' : ''}>${T[c]}</option>`).join('')}
+                       </select>`
+                    : `<input id="${g.gid}-${key}" data-act="patch-input" data-gid="${g.gid}" data-key="${key}"
+                         type="${['doseAmount', 'frequencyPerDay', 'durationDays'].includes(key) ? 'number' : 'text'}" step="0.5" min="0"
+                         value="${f.value === null || f.value === false ? '' : esc(f.value)}"
+                         placeholder="${f.value === null ? '약봉투를 보고 입력해 주세요' : ''}">`}
+                  <p class="src">${f.source === 'BAG_OCR'
+                    ? (f.originalText === ''
+                        ? '약봉투에서 찾지 못한 항목입니다'
+                        : `약봉투 표기 <span class="mono">${esc(f.originalText)}</span>${f.normalizedText && f.normalizedText !== f.originalText ? ` → <span class="mono">${esc(f.normalizedText)}</span>` : ''}`)
+                    : '약사님이 직접 입력한 값입니다'}</p>
+                </div>`;
+              }).join('')}
+            </div>
+          </section>`).join('')}
+
+        ${issues.length ? `
+        <section class="card">
+          <div class="card-head"><h2>확인할 항목</h2></div>
+          <div class="card-body" style="display:grid;gap:6px">
+            ${issues.filter((i) => !i.bagId || i.bagId === bag.bagId).map((i) => `<div class="notice ${i.sev === 'BLOCKING' ? 'bad' : 'warn'}"><span aria-hidden="true">${i.sev === 'BLOCKING' ? '✕' : '!'}</span><span>${esc(i.msg)}</span></div>`).join('')}
+          </div>
+        </section>` : ''}
+      </div>
+     </div>`,
+    `<span style="margin-right:auto;font-weight:700;font-size:13px;color:${blocks.length ? 'var(--danger)' : 'var(--ok)'}">
+       <span aria-hidden="true">${blocks.length ? '✕' : '✓'}</span>
+       ${blocks.length ? `확인이 필요한 항목 ${blocks.length}개${warns.length ? ` · 한 번 봐주실 항목 ${warns.length}개` : ''}` : '모두 확인되었습니다'}
+     </span>
+     <button class="btn ghost" data-act="route" data-route="read"><span aria-hidden="true">←</span> 이전으로</button>
+     <button class="btn" data-act="to-compose" ${blocks.length ? 'disabled' : ''}>다음 · 안내 문장 만들기 <span aria-hidden="true">→</span></button>`
+  );
+}
+
+/* ---------------- 화면: 안내카드 구성 ---------------- */
+const TYPE_LABEL = { INTRO: '안내 시작', DOSING: '복용량·횟수', FREQUENCY: '복용횟수', TIMING: '복용시점', DURATION: '복용기간', AS_NEEDED: '필요시 복용', CAUTION: '주의사항', STORAGE: '보관', ADVERSE_REACTION: '이상반응', PHARMACIST_NOTE: '약사 입력', CLOSING: '안내 종료' };
+const SOURCE_LABEL = { BAG_OCR: '약봉투에서 읽음', REVIEWED_PHRASE_DB: '표준 안내 문구', PHARMACIST_INPUT: '직접 입력' };
+
+/** 주의사항 문구 목록 (카테고리·검색 결과) */
+function libraryList(session) {
+  const q = S.addQuery.trim();
+  // 검색어를 입력하면 전체에서 찾는다 (카테고리 제한을 걸지 않는다)
+  const cat = q === '' ? S.addCat : null;
+  const list = CAUTION_LIBRARY.filter(
+    (x) => (cat === null || x.cat === cat) && (q === '' || x.text.includes(q) || x.keys.includes(q)),
+  );
+  if (list.length === 0) {
+    return '<div class="notice warn"><span aria-hidden="true">!</span><span>찾는 안내가 없습니다. 아래에 직접 입력해 주세요.</span></div>';
+  }
+  const rows = list
+    .map((x) => {
+      const added = session.cards.some((c) => c.text === x.text);
+      return `<li data-added="${added ? 1 : 0}">
+        <p>${esc(x.text)}</p>
+        ${added ? '<span class="chip ok"><span aria-hidden="true">✓</span>추가됨</span>' : `<button class="btn sm" data-act="add-lib" data-id="${x.id}">추가</button>`}
+      </li>`;
+    })
+    .join('');
+  return `<p style="margin:0;font-size:12px;color:var(--ink-soft)">${list.length}개 문장</p><ul class="liblist">${rows}</ul>`;
+}
+
+function viewCompose() {
+  const s = S.session;
+  const cards = [...s.cards].sort((a, b) => a.order - b.order);
+  const sel = selectedCards(s);
+  return shell(2,
+    `<h1>방문자에게 보여줄 문장을 정해 주세요</h1>
+     <p>모든 문장이 <strong>포함하기</strong>로 켜져 있습니다. 순서를 바꾸거나 빼고 싶은 문장의 체크를 해제하고, 덧붙일 주의사항이 있으면 추가해 주세요.</p>`,
+    `<div class="grid-2 wide-left">
+      <section style="display:grid;gap:8px">
+        <div class="steptag"><span class="num">1</span>만들어진 안내 문장을 확인해 주세요</div>
+        <div class="howto">
+          <span><b>순서 바꾸기</b> — 문장의 <b>위로 / 아래로</b>를 누르세요</span>
+          <span><b>빼기</b> — <b>포함하기</b> 체크를 해제하면 <b>제외</b>되어 재생되지 않습니다</span>
+        </div>
+        ${cards.map((c, i) => `
+          <article class="gcard" data-on="${c.selected ? 1 : 0}">
+            <div class="gcard-top">
+              <span class="chip">${i + 1}</span>
+              <span class="chip">${TYPE_LABEL[c.type] || c.type}</span>
+              ${c.required ? '<span class="chip bad"><span aria-hidden="true">★</span>꼭 필요</span>' : '<span class="chip">선택 가능</span>'}
+              <span class="chip">${SOURCE_LABEL[c.source]}</span>
+              ${c.authored ? '<span class="chip warn"><span aria-hidden="true">✎</span>약사님이 쓴 문장</span>' : ''}
+              ${c.selected ? '' : '<span class="chip bad"><span aria-hidden="true">✕</span>제외됨</span>'}
+              <span class="gcard-actions">
+                <button class="movebtn" data-act="move" data-id="${c.id}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="위로 옮기기">
+                  <span aria-hidden="true">↑</span>위로
+                </button>
+                <button class="movebtn" data-act="move" data-id="${c.id}" data-dir="1" ${i === cards.length - 1 ? 'disabled' : ''} aria-label="아래로 옮기기">
+                  <span aria-hidden="true">↓</span>아래로
+                </button>
+                <label class="sendtoggle" for="send-${c.id}">
+                  <input id="send-${c.id}" type="checkbox" data-act="toggle-card" data-id="${c.id}" ${c.selected ? 'checked' : ''}>
+                  ${c.selected ? '포함하기' : '제외'}
+                </label>
+              </span>
+            </div>
+            <p class="gcard-sentence">${emphasize(c.text)}</p>
+            <details><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-soft)">수어로 표현하는 순서 보기</summary>
+              <div class="tabs" style="margin-top:6px">${c.gloss.map((g) => `<span class="chip">${esc(g)}</span>`).join('')}</div>
+            </details>
+          </article>`).join('')}
+
+        <div class="steptag"><span class="num">2</span>덧붙일 주의사항이 있으면 추가해 주세요<span class="opt">필요할 때만</span></div>
+        ${S.addOpen ? `
+        <section class="card" style="border-color:var(--brand)">
+          <div class="card-head">
+            <h2><span aria-hidden="true">💬</span> 주의사항 안내 추가</h2>
+            <span class="chip warn">약사 판단으로 덧붙이는 안내</span>
+            <span class="spacer"></span>
+            <button class="btn ghost sm" data-act="add-close">닫기</button>
+          </div>
+          <div class="card-body" style="display:grid;gap:10px">
+            <p style="margin:0;font-size:12.5px;color:var(--ink-soft)">
+              성분이나 조제 내용을 보고 덧붙이실 안내를 찾아 추가하세요. 여러 개 추가할 수 있고, 추가한 문장도 수어영상과 자막으로 함께 재생됩니다.
+            </p>
+            <input id="cautionsearch" class="text-input" data-act="search-input" autocomplete="off"
+              placeholder="증상이나 상황으로 찾기 (예: 졸음, 소화, 열, 보관)" value="${esc(S.addQuery)}">
+            <div class="tabs">
+              <button class="btn ${S.addCat === null ? '' : 'ghost'} sm" data-act="add-cat" data-cat="">전체</button>
+              ${CAUTION_CATEGORIES.map((cat) => `<button class="btn ${S.addCat === cat.key ? '' : 'ghost'} sm" data-act="add-cat" data-cat="${cat.key}"><span aria-hidden="true">${cat.icon}</span>${esc(cat.label)}</button>`).join('')}
+            </div>
+            ${S.generating !== null ? `<div class="notice brand"><span class="spin" aria-hidden="true">◐</span><span>“${esc(S.generating)}” 수어영상을 만들고 있습니다…</span></div>` : ''}
+            <div id="liblistwrap">${libraryList(s)}</div>
+            <div style="border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px">
+              <label for="customtext" style="font-weight:700;font-size:13px">찾는 안내가 없으면 직접 입력</label>
+              <p style="margin:0;font-size:12px;color:var(--ink-soft)">직접 쓰신 문장은 약사님이 쓴 문장으로 표시되고, 그 문장에 맞는 수어영상을 새로 만들어 붙입니다.</p>
+              <textarea id="customtext" class="text-input" data-act="custom-input" rows="2" maxlength="120"
+                style="min-height:66px;padding:10px;resize:vertical"
+                placeholder="예: 이 약은 혈압약과 같이 드시면 어지러울 수 있습니다.">${esc(S.customText)}</textarea>
+              <button class="btn" data-act="add-custom" ${S.customText.trim() === '' || S.generating !== null ? 'disabled' : ''}>
+                <span aria-hidden="true">🤟</span>수어영상 만들어 추가하기
+              </button>
+            </div>
+          </div>
+        </section>` : `
+        <div class="addcta">
+          <div class="addcta-text">
+            <h2><span aria-hidden="true">💬</span> 덧붙일 주의사항이 있으신가요?</h2>
+            <p>졸음·운전, 소화, 술·병용, 보관, 이상반응처럼 <strong>약사님의 판단으로 덧붙이는 안내</strong>를 문장으로 추가할 수 있습니다. 추가한 문장도 수어영상과 자막으로 함께 재생됩니다.</p>
+            <p style="margin-top:4px">덧붙일 안내가 없으면 그냥 다음으로 넘어가면 됩니다.</p>
+          </div>
+          <button class="btn lg" data-act="add-open">
+            <span aria-hidden="true">＋</span>주의사항 안내 추가하기
+          </button>
+        </div>`}
+
+      </section>
+
+      <section class="card" style="align-self:start">
+        <div class="card-head"><h2>방문자에게 보이는 자막</h2><span class="spacer"></span><span class="chip">${sel.length}문장</span></div>
+        <div class="card-body" style="display:grid;gap:8px">
+          ${sel.length ? sel.map((c, i) => `<div class="sub-preview"><p class="idx">${i + 1} / ${sel.length}</p><p>${emphasize(c.text)}</p></div>`).join('')
+            : '<div class="notice bad"><span aria-hidden="true">✕</span><span>체크한 문장이 없어 안내를 보낼 수 없습니다.</span></div>'}
+
+          <label class="checkrow" for="confirm-all" style="margin-top:4px">
+            <input id="confirm-all" type="checkbox" data-act="confirm-all" ${S.confirmed ? 'checked' : ''}>
+            <span>약봉투 내용과 위 문장을 확인했습니다</span>
+          </label>
+          <details>
+            <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-soft)">무엇을 확인하는 건가요?</summary>
+            <ul style="margin:8px 0 0;padding-left:20px;font-size:12.5px;color:var(--ink-soft);display:grid;gap:4px">
+              <li>약봉투에 적힌 복용법과 읽어온 내용이 같습니다</li>
+              <li>빠진 복약정보가 없는지 확인했습니다</li>
+              <li>선택한 주의사항이 이번 조제 내용에 맞습니다</li>
+              <li>방문자에게 보일 문장을 확인했습니다</li>
+              <li>이 내용을 방문자에게 보여줍니다</li>
+            </ul>
+          </details>
+          <p style="margin:0;font-size:12px;color:var(--ink-soft)">확인하시면 수어영상이 만들어지고, 방문자 화면으로 전달됩니다.</p>
+        </div>
+      </section>
+     </div>`,
+    `<span style="margin-right:auto;font-weight:700;font-size:13px">보낼 문장 ${sel.length}개 (전체 ${cards.length}개 중)</span>
+     <button class="btn ghost" data-act="route" data-route="review"><span aria-hidden="true">←</span> 이전으로</button>
+     <button class="btn" data-act="to-play"><span aria-hidden="true">🤟</span>수어영상 보기 <span aria-hidden="true">→</span></button>`
+  );
+}
+
+/* ---------------- 화면: 완료 · QR ---------------- */
+function viewComplete() {
+  const s = S.session;
+  const issued = !!s.shareToken;
+  const rec = issued ? shareRecord(s.shareToken) : null;
+  const sel = selectedCards(s);
+  const expired = rec !== null && (rec.status === 'REVOKED' || now() >= rec.expiresAt);
+
+  return shell(4,
+    issued
+      ? `<h1>복약안내가 끝났습니다</h1><p>보내신 안내는 48시간 동안 QR로 다시 볼 수 있습니다. 약봉투 사진은 지웠습니다.</p>`
+      : `<h1>안내를 마쳐 주세요</h1><p>방문자가 이해했습니다를 누르거나, 약사님이 안내 마치기를 누르면 끝납니다.</p>`,
+    `<div class="grid-2">
+      <section class="card">
+        <div class="card-head"><h2>방문자에게 보여드린 안내</h2><span class="spacer"></span><span class="chip">${sel.length}문장</span></div>
+        <div class="card-body" style="display:grid;gap:8px">
+          ${sel.map((c, i) => `<div class="sub-preview"><p class="idx">${i + 1} / ${sel.length}</p><p>${emphasize(c.text)}</p></div>`).join('')}
+
+          <h3 style="margin:8px 0 0;font-size:13px">방문자가 누른 버튼</h3>
+          <dl class="kv">
+            ${s.reactions.length ? [...s.reactions].reverse().slice(0, 8).map((r) => `<div><dt>${REACTION_LABEL[r.type] || r.type}</dt><dd style="font-weight:400;color:var(--ink-soft)">${timeKo(r.at)}</dd></div>`).join('') : '<div><dt>아직 없습니다.</dt><dd></dd></div>'}
+          </dl>
+        </div>
+      </section>
+
+      <div style="display:grid;gap:12px">
+        <section class="card">
+          <div class="card-head"><h2>48시간 다시보기 QR</h2></div>
+          <div class="card-body" style="display:grid;gap:10px;justify-items:center">
+            ${issued ? `
+              <div style="background:#fff;padding:12px;border-radius:10px;border:1px solid var(--line);line-height:0">${qrSvg(shareUrl(s.shareToken), 200) ?? '<p style="line-height:1.5;font-size:12px;color:#444;margin:0;padding:20px">주소가 너무 길어 QR을 만들지 못했습니다. 아래 주소를 사용해 주세요.</p>'}</div>
+              <p class="mono" style="margin:0;font-size:10.5px;word-break:break-all;text-align:center;color:var(--ink-soft)">${esc(shareUrl(s.shareToken))}</p>
+              <div class="notice brand" style="display:block;width:100%">
+                <p style="margin:0">방문자는 이 QR로 <strong>48시간 동안</strong> 안내를 다시 볼 수 있습니다.</p>
+                <p style="margin:4px 0 0">이 안내는 <strong>${expiryKorean(rec.expiresAt)}</strong>까지 볼 수 있습니다.</p>
+              </div>
+              <dl class="kv" style="width:100%;background:var(--surface-2);padding:10px;border-radius:8px">
+                <div><dt>지금 상태</dt><dd>${rec.status === 'REVOKED' ? '더 이상 볼 수 없음' : '다시 볼 수 있음'}</dd></div>
+                <div><dt>만든 시각</dt><dd>${dateKo(rec.issuedAt)}</dd></div>
+                <div><dt>볼 수 있는 기한</dt><dd>${dateKo(rec.expiresAt)}</dd></div>
+                <div><dt>안내 내용</dt><dd>${rec.cards.length ? '48시간 동안만 보관하고 자동 삭제' : '삭제 완료'}</dd></div>
+                <div><dt>약봉투 사진</dt><dd>저장하지 않음</dd></div>
+                <div><dt>방문자 개인정보</dt><dd>저장하지 않음</dd></div>
+              </dl>
+              <div class="tabs" style="width:100%">
+                <button class="btn warn sm" data-act="revoke-qr">QR 지금 사용 중지</button>
+                <button class="btn ghost sm" data-act="open-share">다시보기 화면 열어보기</button>
+              </div>
+              <p style="margin:0;font-size:11.5px;color:var(--ink-soft)">QR 주소에는 이름이나 복약정보가 들어가지 않습니다. 48시간이 지나면 주소와 안내 내용이 자동으로 지워집니다.${location.protocol === 'file:' ? ' 파일로 열었을 때는 휴대전화 스캔 대신 <strong>다시보기 화면 열어보기</strong> 버튼으로 보여주세요.' : ''}</p>
+            ` : '<p style="margin:0;padding:22px 0;text-align:center;color:var(--ink-soft);font-size:13px">안내를 마치면 방문자가 다시 볼 수 있는 QR을 만들어 드립니다.</p>'}
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>정보 처리 상태</h2></div>
+          <div class="card-body">
+            <dl class="kv">
+              <div><dt>약봉투 사진</dt><dd>${s.imagesPurged ? '안내를 마쳐서 지웠습니다' : '안내 중에만 사용합니다'}</dd></div>
+              <div><dt>방문자 개인정보</dt><dd>받지도, 저장하지도 않습니다</dd></div>
+              <div><dt>안내 보낸 시각</dt><dd>${s.approval ? dateKo(s.approval.at) : '아직 보내지 않음'}</dd></div>
+            </dl>
+          </div>
+        </section>
+      </div>
+     </div>`,
+    issued
+      ? `<button class="btn ghost" data-act="show-patient">수어영상 다시 보기</button><button class="btn" data-act="route" data-route="gallery">다른 약봉투 예시 해보기 <span aria-hidden="true">→</span></button>`
+      : `${s.reactions.some((r) => r.type === 'UNDERSTOOD') ? '<span style="margin-right:auto;font-weight:700;font-size:13px;color:var(--ok)"><span aria-hidden="true">✓</span> 방문자가 이해했습니다를 눌렀습니다</span>' : ''}
+         <button class="btn ghost" data-act="show-patient">수어 설명 영상 보기</button>
+         <button class="btn" data-act="complete">안내 마치고 다시보기 QR 만들기</button>`
+  );
+}
+
+/* ---------------- 화면: 환자 (U01~U04) ---------------- */
+function viewPatient() {
+  const s = S.session;
+  const approved = !!s.approval;
+  const back = `<button class="chip dim" data-act="hide-patient">약사 화면으로</button>`;
+  const fast = s.approval && s.approval.demoFast
+    ? '<span class="chip warn"><span aria-hidden="true">!</span>시연용 빠른 진행 · 확인 단계 생략</span>' : '';
+  const top = `<div class="pt-top"><span class="chip dim"><span aria-hidden="true">🤟</span>수어 복약안내</span><span class="chip warn"><span aria-hidden="true">⚠</span>시연용 예시</span>${fast}<span class="spacer"></span>${back}</div>`;
+
+  if (!approved) {
+    return `<div class="patient">${top}
+      <div class="pt-center">
+        <div class="pt-glyph" aria-hidden="true">🤟</div>
+        <h2>농인 방문자를 위한 수어 복약안내</h2>
+        <p>약사님이 수어 복약안내를 준비하고 있습니다</p>
+        <span class="chip dim">잠시만 기다려 주세요</span>
+      </div></div>`;
+  }
+
+  if (S.patientPhase === 'WAITING' || S.patientPhase === 'READY') {
+    return `<div class="patient">${top}
+      <div class="pt-center">
+        <div class="pt-glyph" aria-hidden="true">🤟</div>
+        <h2>약 먹는 방법을 수어로 안내합니다</h2>
+        <p>준비가 되면 안내 시작을 눌러 주세요</p>
+        <button class="btn-pt go" style="min-height:70px;font-size:22px;padding:0 42px" data-act="pt-start"><span aria-hidden="true">▶</span>안내 시작</button>
+        <p style="font-size:15px;color:rgba(255,255,255,.5)">수어와 함께 한국어 자막이 표시됩니다.</p>
+      </div></div>`;
+  }
+
+  if (S.patientPhase === 'DONE') {
+    return `<div class="patient scroll">${top}
+      <div class="pt-center" style="padding-block:20px">
+        <div class="pt-glyph" aria-hidden="true">${sent ? '💬' : '✓'}</div>
+        <h2>복약안내가 끝났습니다</h2>
+        <p>궁금한 점은 약사에게 문의해 주세요</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
+          <button class="btn-pt" data-act="pt-replay"><span aria-hidden="true">↺</span>다시 보기</button>
+          <button class="btn-pt" data-act="pt-slow"><span aria-hidden="true">🐢</span>천천히 보기</button>
+        </div>
+        <button class="btn-pt done" style="padding:0 40px" data-act="pt-understood"><span aria-hidden="true">✓</span>이해했습니다</button>
+      </div></div>`;
+  }
+
+  /* U03 수어 재생 */
+  const p = S.player;
+  const cards = p.cards;
+  const cur = cards[p.i];
+  const seg = p.segments[p.i];
+  const total = p.segments.reduce((a, b) => a + b.ms, 0) / p.rate;
+  const before = p.segments.slice(0, p.i).reduce((a, b) => a + b.ms, 0) / p.rate;
+  const pct = Math.min(100, ((before + p.elapsed) / Math.max(1, total)) * 100);
+
+  return `<div class="patient">${top}
+    <div class="pt-stage">
+      ${p.broken
+        ? svgAvatar(p.playing)
+        : `<div id="ptslot" class="ptslot"><div class="ptload" id="ptload" hidden><span class="spin" aria-hidden="true">◌</span>영상을 불러오고 있습니다</div></div>`}
+      <div class="pt-badges">
+        <span class="chip dim"><span aria-hidden="true">🤟</span>한국수어 안내</span>
+        <span class="chip dim">시연용 예시 영상</span>
+        ${p.broken ? '<span class="chip warn"><span aria-hidden="true">!</span>이 기기에서는 영상이 재생되지 않아 그림으로 보여드립니다</span>' : ''}
+      </div>
+      ${p.broken ? `<div class="glosses">${cur.gloss.map((g, i) => `<span class="gloss" data-on="${i === p.gi ? 1 : 0}">${esc(g)}</span>`).join('')}</div>` : ''}
+    </div>
+    <p class="pt-note">${CLIP_NOTICE}</p>
+    <div class="pt-sub">
+      <div class="pt-sub-meta"><span>${p.i + 1} / ${cards.length} 문장</span><span>${p.playing ? '재생 중' : '일시정지'}${p.rate < 1 ? ' · 천천히' : ''}</span></div>
+      <p>${emphasize(cur.text)}</p>
+    </div>
+    <div class="pt-bar"><i style="width:${pct}%"></i></div>
+    <div class="pt-controls">
+      <button class="btn-pt solid" data-act="pt-toggle"><span aria-hidden="true">${p.playing ? '⏸' : '▶'}</span>${p.playing ? '일시정지' : '재생'}</button>
+      <button class="btn-pt" data-act="pt-restart"><span aria-hidden="true">⏮</span>처음부터</button>
+      <button class="btn-pt" data-act="pt-prev" ${p.i === 0 ? 'disabled' : ''}><span aria-hidden="true">◀</span>이전 문장</button>
+      <button class="btn-pt" data-act="pt-next" ${p.i >= cards.length - 1 ? 'disabled' : ''}>다음 문장 <span aria-hidden="true">▶</span></button>
+      <button class="btn-pt" data-act="pt-slow"><span aria-hidden="true">🐢</span>천천히</button>
+      <button class="btn-pt" data-act="pt-done"><span aria-hidden="true">✓</span>안내 확인</button>
+      <button class="btn-pt done" data-act="pt-finish"><span aria-hidden="true">🏁</span>안내 마치기</button>
+    </div>
+  </div>`;
+}
+
+function svgAvatar(playing) {
+  return `<svg viewBox="0 0 320 320" role="img" aria-label="수어 아바타">
+    <path d="M80 300 C80 235 115 205 160 205 C205 205 240 235 240 300 Z" fill="#3c5a92"/>
+    <rect x="148" y="150" width="24" height="30" rx="10" fill="#e8c9a8"/>
+    <circle cx="160" cy="118" r="44" fill="#f0d3b2"/>
+    <circle cx="145" cy="112" r="4.5" fill="#22303f"/><circle cx="175" cy="112" r="4.5" fill="#22303f"/>
+    <path d="M148 138 Q160 146 172 138" stroke="#22303f" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <circle cx="110" cy="215" r="20" fill="#f0d3b2"${playing ? '><animate attributeName="cy" values="215;188;215" dur="1.1s" repeatCount="indefinite"/></circle>' : '/>'}
+    <circle cx="210" cy="215" r="20" fill="#f0d3b2"${playing ? '><animate attributeName="cy" values="215;196;215" dur="1.3s" repeatCount="indefinite"/></circle>' : '/>'}
+  </svg>`;
+}
+
+/* ---------------- 화면: QR 재열람 (Q01) ---------------- */
+function viewShare(token) {
+  const res = readShare(token);
+  if (!res.ok) {
+    return `<div class="patient scroll">
+      <div class="pt-center" style="padding-block:24px">
+        <div class="pt-glyph" aria-hidden="true">${res.reason === 'REVOKED' ? '⛔' : '⏳'}</div>
+        <h2>${res.msg}</h2>
+        <p>복약안내는 만든 뒤 48시간까지만 볼 수 있습니다. 더 필요하시면 약국에 문의해 주세요.</p>
+        <button class="btn-pt" data-act="route" data-route="complete">약사 화면으로</button>
+      </div></div>`;
+  }
+  const rec = res.rec;
+  if (!S.player || S.player.mode !== 'share') startPlayer(rec.cards, rec.segments, 'share');
+  const p = S.player, cur = p.cards[p.i], seg = p.segments[p.i];
+  const total = p.segments.reduce((a, b) => a + b.ms, 0) / p.rate;
+  const before = p.segments.slice(0, p.i).reduce((a, b) => a + b.ms, 0) / p.rate;
+  const pct = Math.min(100, ((before + p.elapsed) / Math.max(1, total)) * 100);
+  const left = Math.max(0, Math.floor((rec.expiresAt - now()) / 3600000));
+
+  return `<div class="patient">
+    <div class="pt-top">
+      <span class="chip dim"><span aria-hidden="true">🤟</span>복약안내 다시보기</span>
+      <span class="chip warn"><span aria-hidden="true">⚠</span>시연용 예시</span>
+      <span class="spacer"></span>
+      <span class="chip dim">${expiryKorean(rec.expiresAt)}까지 볼 수 있어요 · 약 ${left}시간 남음</span>
+      <button class="chip dim" data-act="route" data-route="complete">약사 화면으로</button>
+    </div>
+    <div class="pt-stage">
+      ${p.broken ? svgAvatar(p.playing) : `<div id="ptslot" class="ptslot"><div class="ptload" id="ptload" hidden><span class="spin" aria-hidden="true">◌</span>영상을 불러오고 있습니다</div></div>`}
+      <div class="pt-badges"><span class="chip dim">시연용 예시 영상</span></div>
+      ${p.broken ? `<div class="glosses">${cur.gloss.map((g, i) => `<span class="gloss" data-on="${i === p.gi ? 1 : 0}">${esc(g)}</span>`).join('')}</div>` : ''}
+    </div>
+    <p class="pt-note">${CLIP_NOTICE}</p>
+    <div class="pt-sub">
+      <div class="pt-sub-meta"><span>${p.i + 1} / ${p.cards.length} 문장</span><span>${p.playing ? '재생 중' : '일시정지'}</span></div>
+      <p>${emphasize(cur.text)}</p>
+    </div>
+    <div class="pt-bar"><i style="width:${pct}%"></i></div>
+    <div class="pt-controls">
+      <button class="btn-pt solid" data-act="pt-toggle"><span aria-hidden="true">${p.playing ? '⏸' : '▶'}</span>${p.playing ? '일시정지' : '재생'}</button>
+      <button class="btn-pt" data-act="pt-restart"><span aria-hidden="true">⏮</span>처음부터</button>
+      <button class="btn-pt" data-act="pt-slow"><span aria-hidden="true">🐢</span>천천히</button>
+    </div>
+    <p class="pt-note">${esc(rec.pharmacy)} · ${dateKo(rec.approvedAt)}에 약사님이 보낸 안내입니다. 이 화면에서는 같은 안내만 다시 볼 수 있습니다.</p>
+  </div>`;
+}
+
+/* ---------------- 화면: 인쇄 ---------------- */
+function viewPrint() {
+  return `<main class="page">
+    <div class="noprint" style="display:grid;gap:10px;margin-bottom:18px">
+      <h1 style="margin:0;font-size:22px">약봉투 예시 인쇄</h1>
+      <p style="margin:0;color:var(--ink-soft);font-size:14px">A4 용지에 100퍼센트 크기로 인쇄해 카운터에 놓고 직접 촬영해 보실 수 있습니다. 스캔 화면에서 함께 보여줄 약봉투 예시를 먼저 골라 주세요.</p>
+      <div class="tabs">
+        <button class="btn" data-act="print">인쇄하기</button>
+        <button class="btn ghost" data-act="route" data-route="dashboard">약사 화면으로</button>
+      </div>
+      <div class="notice warn"><span aria-hidden="true">⚠</span><span>인쇄물은 시연용 예시 약봉투입니다. 실제 의약품이나 처방이 아닙니다.</span></div>
+    </div>
+    <div style="display:grid;gap:22px">
+      ${SAMPLES.map((x) => `<section class="printsheet">
+        <h2 style="margin:0 0 6px;font-size:13px">${esc(x.tag)} · ${esc(x.name)} · <span class="mono">${esc(x.id)}</span></h2>
+        <img src="${x.img}" alt="${esc(x.name)}">
+        <p style="margin:6px 0 0;font-size:12px;color:var(--ink-soft)">${esc(x.desc)}</p>
+      </section>`).join('')}
+    </div>
+  </main>`;
+}
+
+/* ---------------- 플레이어 ---------------- */
+function startPlayer(cards, segments, mode) {
+  stopTimer();
+  S.player = { cards, segments, mode, i: 0, gi: 0, elapsed: 0, playing: true, rate: 1, broken: false, mountedKey: null, stall: 0 };
+  startTimer();
+}
+let timer = null;
+function startTimer() {
+  stopTimer();
+  timer = setInterval(() => {
+    const p = S.player;
+    if (!p || !p.playing) return;
+    const dur = p.segments[p.i].ms / p.rate;
+    const v = mountedVideo();
+    if (v) {
+      /* 영상이 아직 준비되지 않았으면 자막·진행바도 같이 기다린다 */
+      const ready = v.readyState >= 3 && !v.paused && !v.seeking && v.currentTime > 0;
+      if (!ready) {
+        p.stall = (p.stall || 0) + 120;
+        if (p.playing) v.play().catch(() => {});
+        paintLoading();
+        if (p.stall < 4000) { paintProgress(); return; }
+      } else {
+        p.stall = 0;
+        p.elapsed = (v.currentTime * 1000) / p.rate;
+      }
+    } else {
+      p.elapsed += 120;
+    }
+    const cur = p.cards[p.i];
+    p.gi = cur.gloss.length ? Math.min(cur.gloss.length - 1, Math.floor((p.elapsed / dur) * cur.gloss.length)) : 0;
+    /* 영상 종료 이벤트가 오지 않는 경우를 대비한 안전망 */
+    if (p.elapsed >= dur + (p.broken ? 0 : 2000)) nextSentence();
+    else paintProgress();
+  }, 120);
+}
+function paintLoading() {
+  const box = document.getElementById('ptload');
+  if (!box) return;
+  const v = mountedVideo();
+  const p = S.player;
+  box.hidden = !(p && p.playing && v && (v.readyState < 3 || v.seeking));
+}
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+function paintProgress() {
+  const p = S.player;
+  if (!p) return;
+  const bar = document.querySelector('.pt-bar i');
+  const meta = document.querySelector('.pt-sub-meta span:first-child');
+  if (!bar) return;
+  const total = p.segments.reduce((a, b) => a + b.ms, 0) / p.rate;
+  const before = p.segments.slice(0, p.i).reduce((a, b) => a + b.ms, 0) / p.rate;
+  bar.style.width = `${Math.min(100, ((before + p.elapsed) / Math.max(1, total)) * 100)}%`;
+  if (meta) meta.textContent = `${p.i + 1} / ${p.cards.length} 문장`;
+  if (p.broken) {
+    document.querySelectorAll('.gloss').forEach((el, i) => el.setAttribute('data-on', i === p.gi ? '1' : '0'));
+  }
+}
+function nextSentence() {
+  const p = S.player;
+  if (p.i < p.cards.length - 1) { p.i += 1; p.elapsed = 0; p.gi = 0; render(); }
+  else {
+    p.playing = false;
+    stopTimer();
+    if (p.mode === 'patient') { S.patientPhase = 'DONE'; react('PLAY_COMPLETED'); }
+    render();
+  }
+}
+
+function react(type, q) {
+  const s = S.session;
+  if (!s || !s.approval) return;
+  s.reactions.push({ id: nextId('REACTION'), type, q: q || null, at: now(), resolved: false });
+  if (type === 'QUESTION') s.status = 'QUESTION';
+  else if (type === 'PLAY_STARTED') s.status = 'PLAYING';
+}
+
+/* ---------------- QR 주소 ---------------- */
+function shareUrl(token) {
+  return `${location.origin}${location.pathname}#/r/${token}`;
+}
+
+/* ---------------- 라우팅 · 렌더 ---------------- */
+function go(route) { S.route = route; S.error = null; S.modal = null; render(); }
+
+function render() {
+  const app = document.getElementById('app');
+  const hash = location.hash || '';
+  const shareMatch = /^#\/r\/(.+)$/.exec(hash);
+
+  let html;
+  if (shareMatch) html = viewShare(shareMatch[1]);
+  else if (S.route === 'patient') html = viewPatient();
+  else if (S.route === 'login') html = viewLogin();
+  else if (S.route === 'dashboard') html = viewDashboard();
+  else if (S.route === 'print') html = viewPrint();
+  else if (S.route === 'gallery') html = viewGallery();
+  else if (!S.session) html = viewLogin();
+  else if (S.route === 'read') html = viewRead();
+  else if (S.route === 'review') html = viewReview();
+  else if (S.route === 'compose') html = viewCompose();
+  else if (S.route === 'complete') html = viewComplete();
+  else html = viewDashboard();
+
+  parkVideos();
+  app.innerHTML = html;
+  S.flash = null;
+  afterRender();
+}
+
+function afterRender() {
+  /* 원문 강조: 필드에 포커스·호버하면 약봉투의 해당 영역을 강조한다 */
+  document.querySelectorAll('.field[data-hl]').forEach((el) => {
+    const raw = el.getAttribute('data-hl');
+    if (!raw) return;
+    const set = () => { try { S.highlight = JSON.parse(raw); renderHighlightOnly(); } catch (_) {} };
+    el.addEventListener('mouseenter', set);
+    el.addEventListener('focusin', set);
+  });
+
+  /* 영상 재생 상태 동기화 — 미리 받아 둔 요소를 그대로 옮겨 붙여 로딩을 없앤다 */
+  const slot = document.getElementById('ptslot');
+  const p0 = S.player;
+  if (slot && p0 && !p0.broken) {
+    const seg0 = p0.segments[p0.i];
+    const v = videoFor(seg0.url);
+    if (v.error) { p0.broken = true; render(); return; }
+    slot.appendChild(v);
+    v.playbackRate = p0.rate;
+    if (p0.mountedKey !== p0.i + ':' + seg0.url) {
+      p0.mountedKey = p0.i + ':' + seg0.url;
+      try { v.currentTime = 0; } catch (_) {}
+      p0.stall = 0;
+    }
+    paintLoading();
+    v.onended = () => { if (S.player && S.player.playing) nextSentence(); };
+    v.onerror = () => { if (S.player && !S.player.broken) { S.player.broken = true; render(); } };
+    v.onwaiting = paintLoading;
+    v.oncanplay = paintLoading;
+    v.onplaying = paintLoading;
+    if (p0.playing) v.play().catch(() => {}); else v.pause();
+    /* 다음 문장 영상을 지금부터 준비해 둔다 */
+    const nxt = p0.segments[p0.i + 1];
+    if (nxt) { const nv = videoFor(nxt.url); try { nv.currentTime = 0; nv.load(); } catch (_) {} }
+  }
+
+  /* 검색창처럼 다시 그린 뒤 포커스를 되돌려야 하는 입력 */
+  if (S.focusId) {
+    const target = document.getElementById(S.focusId);
+    S.focusId = null;
+    if (target) {
+      target.focus();
+      const end = target.value.length;
+      try { target.setSelectionRange(end, end); } catch (_) {}
+    }
+  }
+
+  /* 카메라 스트림 복원 */
+  const cam = document.getElementById('cam');
+  if (cam && S.cameraStream) { cam.srcObject = S.cameraStream; cam.play().catch(() => {}); const h = document.getElementById('camhint'); if (h) h.hidden = true; }
+}
+
+function renderHighlightOnly() {
+  const wrap = document.querySelector('.bagwrap');
+  if (!wrap || !S.highlight) return;
+  let hl = wrap.querySelector('.hl');
+  if (!hl) { hl = document.createElement('div'); hl.className = 'hl'; wrap.appendChild(hl); }
+  const h = S.highlight;
+  hl.style.left = `${h.x * 100}%`; hl.style.top = `${h.y * 100}%`;
+  hl.style.width = `${h.w * 100}%`; hl.style.height = `${h.h * 100}%`;
+}
+
+/* ---------------- 이벤트 ---------------- */
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.getAttribute('data-act');
+  /* 안내창 바깥을 눌렀을 때만 닫는다 */
+  if (act === 'modal-close' && el.classList.contains('modal-back') && e.target.closest('[data-stop]')) return;
+  const s = S.session;
+
+  switch (act) {
+    case 'modal-close': S.modal = null; render(); break;
+    case 'modal-focus': {
+      const id = el.getAttribute('data-focus');
+      S.modal = null;
+      render();
+      const target = document.getElementById(id);
+      if (target) {
+        const row = target.closest('.checkrow') || target;
+        row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        row.classList.add('pulse');
+        setTimeout(() => row.classList.remove('pulse'), 2600);
+        try { target.focus({ preventScroll: true }); } catch (_) { target.focus(); }
+      }
+      break;
+    }
+    case 'login': S.session = null; go('dashboard'); break;
+    case 'route': {
+      const r = el.getAttribute('data-route');
+      if (location.hash) { history.replaceState(null, '', location.pathname); }
+      go(r);
+      break;
+    }
+    case 'new-session': startCase(S.caseId); break;
+    case 'start-case': startCase(el.getAttribute('data-id')); break;
+    case 'confirm-all': break;
+    case 'to-play': {
+      const sel0 = s ? selectedCards(s) : [];
+      if (!sel0.length) {
+        S.modal = {
+          title: '보낼 문장이 없습니다',
+          body: ['방문자에게 보여줄 문장이 하나도 체크되지 않았습니다.', '문장 목록에서 “포함하기”를 최소 1개 체크한 뒤 다시 눌러 주세요.'],
+          focus: null,
+        };
+        render();
+        break;
+      }
+      if (!S.confirmed) {
+        S.modal = {
+          title: '확인이 먼저 필요합니다',
+          body: ['방문자에게 보내기 전에 약사님이 내용을 확인해 주셔야 합니다.', '오른쪽 “약봉투 내용과 위 문장을 확인했습니다”를 체크하면 수어영상 보기로 넘어갑니다.'],
+          focus: 'confirm-all',
+        };
+        render();
+        break;
+      }
+      S.approveChecks = { ocrMatchesBag: true, missingFieldsChecked: true, cautionsAppropriate: true, subtitlesChecked: true, finalApproval: true };
+      approve();
+      S.route = 'patient';
+      S.patientPhase = 'READY';
+      S.player = null;
+      stopTimer();
+      render();
+      break;
+    }
+    case 'pt-finish': {
+      stopTimer();
+      S.player = null;
+      if (!S.doneCases.includes(S.caseId)) S.doneCases = [...S.doneCases, S.caseId];
+      S.route = 'complete';
+      render();
+      break;
+    }
+    case 'print': window.print(); break;
+
+    case 'set-bag': S.activeBag = Number(el.getAttribute('data-i')); S.highlight = null; render(); break;
+
+    case 'camera-on': startCamera(); break;
+    case 'pick-photo': pickPhoto(); break;
+    case 'mobile-shot': mobileShot(); break;
+    case 'camera-off': stopCamera(); render(); break;
+    case 'capture': capture(); break;
+
+    case 'verify': verifyField(el.getAttribute('data-gid'), el.getAttribute('data-key')); render(); break;
+    case 'patch': patchField(el.getAttribute('data-gid'), el.getAttribute('data-key'), el.getAttribute('data-value')); render(); break;
+    case 'to-compose': s.status = 'COMPOSED'; s.cards = composeCards(s); S.confirmed = false; go('compose'); break;
+
+
+    case 'move': {
+      const dir = Number(el.getAttribute('data-dir'));
+      const sorted = [...s.cards].sort((a, b) => a.order - b.order);
+      const i = sorted.findIndex((x) => x.id === el.getAttribute('data-id'));
+      const j = i + dir;
+      if (i >= 0 && j >= 0 && j < sorted.length) {
+        const a = sorted[i].order; sorted[i].order = sorted[j].order; sorted[j].order = a;
+      }
+      render();
+      break;
+    }
+    case 'add-open': S.addOpen = true; S.addCat = null; S.addQuery = ''; render(); break;
+    case 'add-close': S.addOpen = false; render(); break;
+    case 'add-cat': {
+      const cat = el.getAttribute('data-cat');
+      S.addCat = cat === '' ? null : cat;
+      render();
+      break;
+    }
+    case 'add-lib': {
+      const item = CAUTION_LIBRARY.find((x) => x.id === el.getAttribute('data-id'));
+      if (item) {
+        const ok = addGuidanceCard(item.text, item.gloss, 'REVIEWED_PHRASE_DB');
+        S.flash = ok ? '안내 문장에 추가했습니다.' : '이미 추가된 문장입니다.';
+      }
+      render();
+      break;
+    }
+    case 'add-custom': {
+      const text = S.customText.trim();
+      if (text === '' || S.generating !== null) break;
+      /* 실제 서비스에서는 이 시점에 아바타가 문장에 맞는 수어영상을 생성한다 */
+      S.generating = text;
+      render();
+      setTimeout(() => {
+        const ok = addGuidanceCard(text, ['약사', '설명', '추가'], 'PHARMACIST_INPUT');
+        S.generating = null;
+        S.customText = ok ? '' : S.customText;
+        S.flash = ok ? '수어영상을 만들어 안내 문장에 추가했습니다.' : '이미 추가된 문장입니다.';
+        render();
+      }, 1700);
+      break;
+    }
+
+    case 'check': break; /* change 이벤트에서 처리 */
+    case 'approve': approve(); render(); break;
+    case 'revoke-approval': s.approval = null; s.avatar = null; s.status = 'COMPOSED'; S.confirmed = false; go('compose'); break;
+
+    case 'show-patient': S.route = 'patient'; S.patientPhase = 'READY'; S.player = null; stopTimer(); render(); break;
+    case 'hide-patient': stopTimer(); S.player = null; S.route = s.approval ? 'complete' : 'compose'; render(); break;
+
+    case 'pt-start': {
+      startPlayer(selectedCards(s), s.avatar.segments, 'patient');
+      S.patientPhase = 'PLAYING';
+      react('PLAY_STARTED');
+      render();
+      break;
+    }
+    case 'pt-toggle': S.player.playing = !S.player.playing; render(); break;
+    case 'pt-restart': S.player.i = 0; S.player.elapsed = 0; S.player.gi = 0; S.player.playing = true; render(); break;
+    case 'pt-prev': S.player.i = Math.max(0, S.player.i - 1); S.player.elapsed = 0; render(); break;
+    case 'pt-next': S.player.i = Math.min(S.player.cards.length - 1, S.player.i + 1); S.player.elapsed = 0; render(); break;
+    case 'pt-slow': {
+      if (S.player) { S.player.rate = 0.7; S.player.playing = true; }
+      if (s) { s.rate = 0.7; react('SLOW'); }
+      if (S.patientPhase !== 'PLAYING' && s && s.avatar) { startPlayer(selectedCards(s), s.avatar.segments, 'patient'); S.player.rate = 0.7; S.patientPhase = 'PLAYING'; }
+      render();
+      break;
+    }
+    case 'pt-replay': startPlayer(selectedCards(s), s.avatar.segments, 'patient'); S.patientPhase = 'PLAYING'; react('REPLAY'); render(); break;
+    case 'pt-done': stopTimer(); S.patientPhase = 'DONE'; render(); break;
+    case 'pt-understood': react('UNDERSTOOD'); S.route = 'complete'; stopTimer(); S.player = null; render(); break;
+
+    case 'resend': {
+      const r = s.reactions.find((x) => x.id === el.getAttribute('data-rid'));
+      if (r) r.resolved = true;
+      s.focusCardId = el.getAttribute('data-cid');
+      s.status = 'PLAYING';
+      S.flash = '그 문장을 방문자 화면에서 다시 보여줍니다.';
+      render();
+      break;
+    }
+    case 'complete': completeSession(); render(); break;
+    case 'revoke-qr': revokeShare(s.shareToken); S.flash = 'QR을 사용 중지했습니다. 안내 내용도 지웠습니다.'; render(); break;
+    case 'open-share': location.hash = `#/r/${s.shareToken}`; break;
+
+  }
+});
+
+/* 타이핑 중에는 상태만 저장한다 (검색창은 결과를 바로 걸러야 하므로 다시 그린다) */
+document.addEventListener('input', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.getAttribute('data-act');
+  if (act === 'custom-input') {
+    S.customText = el.value;
+    const btn = document.querySelector('[data-act="add-custom"]');
+    if (btn) btn.disabled = el.value.trim() === '' || S.generating !== null;
+  } else if (act === 'search-input') {
+    S.addQuery = el.value;
+    const wrap = document.getElementById('liblistwrap');
+    if (wrap) wrap.innerHTML = libraryList(S.session);
+  }
+});
+
+document.addEventListener('change', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.getAttribute('data-act');
+  if (act === 'patch-input') { patchField(el.getAttribute('data-gid'), el.getAttribute('data-key'), el.value); render(); }
+  else if (act === 'confirm-all') { S.confirmed = el.checked; if (el.checked) S.modal = null; render(); }
+  else if (act === 'toggle-card') {
+    const card = S.session.cards.find((x) => x.id === el.getAttribute('data-id'));
+    if (card) card.selected = el.checked;
+    render();
+  }
+  else if (act === 'set-case') { S.captureCase = el.value; }
+  else if (act === 'photo-input') { const f = el.files && el.files[0]; if (f) handlePhoto(f); el.value = ''; }
+});
+
+window.addEventListener('hashchange', () => { stopTimer(); S.player = null; render(); });
+
+/* ---------------- 카메라 ---------------- */
+/* getUserMedia는 https 또는 localhost에서만 동작하고, 일부 내장 화면에서는 차단된다 */
+function cameraSupported() {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext !== false;
+}
+async function startCamera() {
+  if (!cameraSupported()) {
+    S.error = '이 환경에서는 브라우저가 카메라 사용을 허용하지 않습니다. 아래 시연 케이스를 선택하거나 사진 불러오기를 사용해 주세요.';
+    render();
+    return;
+  }
+  try {
+    S.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 } }, audio: false });
+    S.error = null;
+  } catch (err) {
+    const name = err && err.name;
+    S.error = name === 'NotAllowedError'
+      ? '카메라 권한이 차단되어 있습니다. 브라우저 주소창의 카메라 아이콘에서 허용하거나, 시연 케이스를 선택해 진행해 주세요.'
+      : name === 'NotFoundError' || name === 'DevicesNotFoundError'
+        ? '연결된 카메라를 찾을 수 없습니다. 시연 케이스를 선택하거나 사진 불러오기를 사용해 주세요.'
+        : '카메라를 열 수 없습니다. 시연 케이스를 선택하거나 사진 불러오기를 사용해 주세요.';
+  }
+  render();
+}
+
+/* 사진 불러오기 — 카메라를 못 쓰는 환경의 대체 입력 */
+function pickPhoto() {
+  const input = document.getElementById('photofile');
+  if (input) input.click();
+}
+/* 모바일·태블릿에서는 파일 입력의 capture 속성으로 카메라 앱을 연다 (iframe 권한과 무관) */
+function mobileShot() {
+  const input = document.getElementById('camfile');
+  if (input) input.click();
+}
+/** 찍은 사진을 지금 보고 있는 약봉투 자리에 넣는다 */
+function handlePhoto(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const s = S.session;
+    if (s && s.bags.length) {
+      const last = s.bags[s.bags.length - 1];
+      last.img = String(reader.result);
+      last.captured = true;
+      S.flash = '찍은 사진을 약봉투 자리에 넣었습니다.';
+      S.route = 'read';
+      render();
+    }
+  };
+  reader.readAsDataURL(file);
+}
+function stopCamera() {
+  if (S.cameraStream) { S.cameraStream.getTracks().forEach((t) => t.stop()); S.cameraStream = null; }
+}
+function capture() {
+  const video = document.getElementById('cam');
+  if (!video || !S.cameraStream) {
+    S.error = '먼저 카메라를 켜 주세요. 카메라를 쓸 수 없으면 사진 불러오기로 진행할 수 있습니다.';
+    render();
+    return;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 960;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  stopCamera();
+  const s = S.session;
+  if (s && s.bags.length) {
+    const last = s.bags[s.bags.length - 1];
+    last.img = dataUrl;
+    last.captured = true;
+    S.flash = '촬영한 사진을 약봉투 자리에 넣었습니다.';
+  }
+  S.route = 'read';
+  render();
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.modal) { S.modal = null; render(); } });
+
+render();
+preloadClips();
+</script>
+
+</body>
+</html>
