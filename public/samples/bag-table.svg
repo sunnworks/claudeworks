@@ -18,9 +18,9 @@
 
     <rect x="56" y="150" width="688" height="38" fill="#e8eef9"/>
     <text x="68" y="176" font-size="19" font-weight="700" fill="#344054">의약품명</text>
-    <text x="516" y="176" font-size="19" font-weight="700" fill="#344054" text-anchor="end">1회 투여량</text>
-    <text x="606" y="176" font-size="19" font-weight="700" fill="#344054" text-anchor="end">1일 투여횟수</text>
-    <text x="700" y="176" font-size="19" font-weight="700" fill="#344054" text-anchor="end">총 투약일수</text>
+    <text x="520" y="176" font-size="17" font-weight="700" fill="#344054" text-anchor="end">1회 투여량</text>
+    <text x="612" y="176" font-size="17" font-weight="700" fill="#344054" text-anchor="end">1일 횟수</text>
+    <text x="704" y="176" font-size="17" font-weight="700" fill="#344054" text-anchor="end">투약일수</text>
 
     <rect x="56" y="188" width="688" height="38" fill="#ffffff"/>
     <text x="68" y="214" font-size="23" font-weight="600" fill="#101828">시연용 A정</text>

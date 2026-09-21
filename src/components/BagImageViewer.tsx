@@ -58,11 +58,17 @@ export function BagImageViewer({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={bag.imageRef} alt={`${bag.label} 원문 이미지`} className="block w-full" />
             {maskPatientName && (
+              // 환자명 위치는 약봉투 양식에 따라 다르다. 표 양식은 머리글 아래 한 줄 위에 있다.
               <div
-                className="absolute left-[7%] top-[15.5%] flex h-[7.5%] w-[34%] items-center justify-center rounded bg-ink/85 text-[10px] font-bold text-white"
-                aria-label="환자명 마스킹 영역"
+                className="absolute flex items-center justify-center rounded bg-ink text-[10px] font-bold text-white"
+                style={
+                  bag.imageRef.includes('bag-table')
+                    ? { left: '6.5%', top: '13.3%', width: '20%', height: '4.8%' }
+                    : { left: '7%', top: '15.2%', width: '26%', height: '5.6%' }
+                }
+                aria-label="환자명 가림 영역"
               >
-                환자명 마스킹
+                이름은 가립니다
               </div>
             )}
             {highlight !== null && (
