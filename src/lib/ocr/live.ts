@@ -11,6 +11,7 @@
  */
 
 import { serverConfig } from '@/lib/config';
+import { parseTimingCandidates } from '@/lib/parser';
 import type { ImageQuality } from '@/lib/types';
 import { groupsFromRawText } from './mock';
 import type { OCRProvider, OCRRequest, OCRResult } from './provider';
@@ -63,6 +64,8 @@ export class LiveOCRProvider implements OCRProvider {
       imageQuality: { ...DEFAULT_QUALITY, ...payload.quality },
       rawText,
       asNeededBag: /필요\s*시|증상\s*있을\s*때/.test(rawText),
+      // 복용시점 보기가 여러 개 인쇄된 양식이면 값을 만들지 않고 후보만 전달한다.
+      timingCandidates: parseTimingCandidates(rawText),
       groups: groupsFromRawText(rawText, baseConfidence),
       notes: rawText === '' ? ['문자를 인식하지 못했습니다. 다시 촬영하거나 직접 입력해 주세요.'] : [],
     };

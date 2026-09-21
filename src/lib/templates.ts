@@ -19,6 +19,20 @@ export interface SentenceTemplate {
   gloss: (slots: Record<string, string | number | boolean | null>) => string[];
 }
 
+/**
+ * 1회 복용량 표기.
+ * 실제 약봉투의 0.50 표기는 반 알로 안내해 농인 환자가 오해하지 않게 한다.
+ */
+export function formatAmount(amount: number, unit: string): string {
+  if (amount === 0.5) return unit === '정' || unit === '알' ? '반 알' : `반 ${unit}`;
+  return `${amount}${unit}`;
+}
+
+function amountText(slots: Record<string, string | number | boolean | null>): string {
+  if (typeof slots.amountText === 'string' && slots.amountText !== '') return slots.amountText;
+  return `${slots.amount}${slots.unit}`;
+}
+
 const timingGloss: Record<TimingCode, string[]> = {
   AFTER_MEAL_30: ['밥', '먹다', '끝', '30분', '지나다'],
   AFTER_MEAL: ['밥', '먹다', '후'],
@@ -42,15 +56,23 @@ export const SENTENCE_TEMPLATES: Record<string, SentenceTemplate> = {
     templateId: 'DOSING_STANDARD_V1',
     type: 'DOSING',
     requiredSlots: ['times', 'amount', 'unit', 'days'],
-    render: (s) => `하루 ${s.times}번, 한 번에 ${s.amount}${s.unit}씩, ${s.days}일 동안 드세요.`,
-    gloss: (s) => ['하루', `${s.times}번`, '한번', `${s.amount}${s.unit}`, `${s.days}일`, '먹다'],
+    render: (s) => `하루 ${s.times}번, 한 번에 ${amountText(s)}씩, ${s.days}일 동안 드세요.`,
+    gloss: (s) => ['하루', `${s.times}번`, '한번', amountText(s), `${s.days}일`, '먹다'],
+  },
+  /** 약품별 복용법이 다른 표 기반 약봉투에서 사용한다 (설계서 10 4 표 기반) */
+  DOSING_NAMED_V1: {
+    templateId: 'DOSING_NAMED_V1',
+    type: 'DOSING',
+    requiredSlots: ['names', 'times', 'amount', 'unit', 'days'],
+    render: (s) => `${s.names}은 하루 ${s.times}번, 한 번에 ${amountText(s)}씩, ${s.days}일 동안 드세요.`,
+    gloss: (s) => [`${s.names}`, '하루', `${s.times}번`, '한번', amountText(s), `${s.days}일`, '먹다'],
   },
   DOSE_AMOUNT_V1: {
     templateId: 'DOSE_AMOUNT_V1',
     type: 'DOSING',
     requiredSlots: ['amount', 'unit'],
-    render: (s) => `한 번에 ${s.amount}${s.unit}만큼 드세요.`,
-    gloss: (s) => ['한번', `${s.amount}${s.unit}`, '먹다'],
+    render: (s) => `한 번에 ${amountText(s)}만큼 드세요.`,
+    gloss: (s) => ['한번', amountText(s), '먹다'],
   },
   FREQUENCY_V1: {
     templateId: 'FREQUENCY_V1',
@@ -84,9 +106,8 @@ export const SENTENCE_TEMPLATES: Record<string, SentenceTemplate> = {
     templateId: 'AS_NEEDED_V1',
     type: 'AS_NEEDED',
     requiredSlots: ['symptom', 'amount', 'unit'],
-    render: (s) =>
-      `따로 포장된 약은 ${s.symptom}이 있을 때만 한 번에 ${s.amount}${s.unit} 드세요.`,
-    gloss: (s) => ['따로', '약', `${s.symptom}`, '있다', '때', `${s.amount}${s.unit}`, '먹다'],
+    render: (s) => `따로 포장된 약은 ${s.symptom}이 있을 때만 한 번에 ${amountText(s)} 드세요.`,
+    gloss: (s) => ['따로', '약', `${s.symptom}`, '있다', '때', amountText(s), '먹다'],
   },
   CLOSING_V1: {
     templateId: 'CLOSING_V1',

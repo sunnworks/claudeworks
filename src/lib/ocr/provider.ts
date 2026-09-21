@@ -32,6 +32,8 @@ export interface OCRResult {
   rawText: string;
   groups: OCRGroupResult[];
   asNeededBag: boolean;
+  /** 복용시점 보기 후보 — 약사가 선택한다 */
+  timingCandidates: TimingCode[];
   /** OCR 단계에서 감지한 경고 메시지 */
   notes: string[];
 }

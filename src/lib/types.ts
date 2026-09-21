@@ -151,6 +151,12 @@ export interface MedicationBag {
   rawText: string;
   /** 필요시약 봉투 여부 — 정규 복용약과 분리해 안내한다 */
   asNeededBag: boolean;
+  /**
+   * 복용시점 후보 (설계서 10 4 아이콘·체크 기반).
+   * 실제 약봉투는 복용시점을 인쇄된 보기 중 체크·기입으로 표시하므로 값을 추정하지 않고
+   * 후보만 제시해 약사가 선택하게 한다.
+   */
+  timingCandidates: TimingCode[];
   groups: MedicationGroup[];
   provider: string;
   capturedAt: string;

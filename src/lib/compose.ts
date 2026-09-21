@@ -9,7 +9,7 @@
  */
 
 import { nextId } from './store';
-import { REVIEWED_CAUTIONS, SENTENCE_TEMPLATES, mealsLabel, timingLabel } from './templates';
+import { REVIEWED_CAUTIONS, SENTENCE_TEMPLATES, formatAmount, mealsLabel, timingLabel } from './templates';
 import type { GuidanceCard, MedicationBag, MedicationGroup, Session, TimingCode } from './types';
 
 function buildCard(params: {
@@ -53,112 +53,171 @@ function buildCard(params: {
   };
 }
 
-/** 정규 복용약 그룹의 필수카드 (복용량·횟수·기간·복용시점) */
-function regularCards(bag: MedicationBag, group: MedicationGroup, startOrder: number): GuidanceCard[] {
+/**
+ * 정규 복용약 카드.
+ *
+ * 동일한 복용법(1회량·횟수·기간·시점)을 가진 약들은 한 문장으로 묶고,
+ * 복용법이 다른 약은 약품명을 밝혀 별도 문장으로 분리한다 (설계서 12 1 원칙 3).
+ */
+interface RegularItem {
+  bag: MedicationBag;
+  group: MedicationGroup;
+}
+
+function dosingKey(group: MedicationGroup): string {
+  return [
+    group.doseAmount.value,
+    group.doseUnit.value,
+    group.frequencyPerDay.value,
+    group.durationDays.value,
+    group.timingCode.value,
+  ].join('|');
+}
+
+function regularCards(items: RegularItem[], startOrder: number): GuidanceCard[] {
   const cards: GuidanceCard[] = [];
   let order = startOrder;
 
-  const amount = group.doseAmount.value;
-  const unit = group.doseUnit.value;
-  const times = group.frequencyPerDay.value;
-  const days = group.durationDays.value;
-  const timing = group.timingCode.value;
-
-  // 복용량 + 횟수 + 기간을 한 문장으로 묶는다 (설계서 11 1 DOSING_STANDARD_V1)
-  const dosing = buildCard({
-    type: 'DOSING',
-    templateId: 'DOSING_STANDARD_V1',
-    slots: { times, amount, unit, days },
-    required: true,
-    sourceType: 'BAG_OCR',
-    groupId: group.groupId,
-    bagId: bag.bagId,
-    order: order++,
-  });
-  if (dosing !== null) {
-    cards.push(dosing);
-  } else {
-    // 묶을 수 없으면 확보된 값만 개별 문장으로 만든다.
-    const partials: (GuidanceCard | null)[] = [
-      buildCard({
-        type: 'DOSING',
-        templateId: 'DOSE_AMOUNT_V1',
-        slots: { amount, unit },
-        required: true,
-        sourceType: 'BAG_OCR',
-        groupId: group.groupId,
-        bagId: bag.bagId,
-        order: order++,
-      }),
-      buildCard({
-        type: 'FREQUENCY',
-        templateId: 'FREQUENCY_V1',
-        slots: { times },
-        required: true,
-        sourceType: 'BAG_OCR',
-        groupId: group.groupId,
-        bagId: bag.bagId,
-        order: order++,
-      }),
-      buildCard({
-        type: 'DURATION',
-        templateId: 'DURATION_V1',
-        slots: { days },
-        required: true,
-        sourceType: 'BAG_OCR',
-        groupId: group.groupId,
-        bagId: bag.bagId,
-        order: order++,
-      }),
-    ];
-    for (const card of partials) if (card !== null) cards.push(card);
+  const buckets = new Map<string, RegularItem[]>();
+  for (const item of items) {
+    const key = dosingKey(item.group);
+    buckets.set(key, [...(buckets.get(key) ?? []), item]);
   }
+  // 복용법이 2가지 이상이면 어느 약의 안내인지 밝힌다.
+  const needsNames = buckets.size > 1;
 
-  // 복용시점 — 1일 3회이면 아침·점심·저녁 표현을 사용한다.
-  if (timing !== null) {
-    const meals = times === null ? null : mealsLabel(times);
-    const isMealBased = timing === 'AFTER_MEAL_30' || timing === 'BEFORE_MEAL_30';
-    const timingCard =
-      isMealBased && meals !== null && times === 3
+  for (const bucket of buckets.values()) {
+    const first = bucket[0];
+    if (first === undefined) continue;
+    const { bag, group } = first;
+
+    const amount = group.doseAmount.value;
+    const unit = group.doseUnit.value;
+    const times = group.frequencyPerDay.value;
+    const days = group.durationDays.value;
+    const timing = group.timingCode.value;
+
+    const names = bucket
+      .map((item) => item.group.medicineName.value)
+      .filter((name): name is string => name !== null && name.trim() !== '')
+      .join(', ');
+
+    const slots: Record<string, string | number | boolean | null> = {
+      times,
+      amount,
+      unit,
+      days,
+      amountText: amount === null || unit === null ? null : formatAmount(amount, unit),
+      names: names === '' ? null : names,
+    };
+
+    const dosing =
+      needsNames && names !== ''
         ? buildCard({
-            type: 'TIMING',
-            templateId: 'TIMING_MEALS_V1',
-            slots: { timing: timingLabel(timing), timingCode: timing, meals, minutes: 30 },
+            type: 'DOSING',
+            templateId: 'DOSING_NAMED_V1',
+            slots,
             required: true,
             sourceType: 'BAG_OCR',
             groupId: group.groupId,
             bagId: bag.bagId,
             order: order++,
-            overrideText:
-              timing === 'AFTER_MEAL_30'
-                ? `${meals} 식사 후 30분에 드세요.`
-                : `${meals} 식사 전 30분에 드세요.`,
           })
         : buildCard({
-            type: 'TIMING',
-            templateId: 'TIMING_V1',
-            slots: { timing: timingLabel(timing), timingCode: timing },
+            type: 'DOSING',
+            templateId: 'DOSING_STANDARD_V1',
+            slots,
             required: true,
             sourceType: 'BAG_OCR',
             groupId: group.groupId,
             bagId: bag.bagId,
             order: order++,
           });
-    if (timingCard !== null) cards.push(timingCard);
 
-    // 기간이 묶이지 않은 경우 별도 기간 카드를 추가한다.
-    if (dosing !== null && days !== null) {
-      const durationCard = buildCard({
-        type: 'DURATION',
-        templateId: 'DURATION_V1',
-        slots: { days },
-        required: false,
-        sourceType: 'BAG_OCR',
-        groupId: group.groupId,
-        bagId: bag.bagId,
-        order: order++,
-      });
-      if (durationCard !== null) cards.push(durationCard);
+    if (dosing !== null) {
+      cards.push(dosing);
+    } else {
+      // 묶을 수 없으면 확보된 값만 개별 문장으로 만든다.
+      const partials: (GuidanceCard | null)[] = [
+        buildCard({
+          type: 'DOSING',
+          templateId: 'DOSE_AMOUNT_V1',
+          slots,
+          required: true,
+          sourceType: 'BAG_OCR',
+          groupId: group.groupId,
+          bagId: bag.bagId,
+          order: order++,
+        }),
+        buildCard({
+          type: 'FREQUENCY',
+          templateId: 'FREQUENCY_V1',
+          slots,
+          required: true,
+          sourceType: 'BAG_OCR',
+          groupId: group.groupId,
+          bagId: bag.bagId,
+          order: order++,
+        }),
+        buildCard({
+          type: 'DURATION',
+          templateId: 'DURATION_V1',
+          slots,
+          required: true,
+          sourceType: 'BAG_OCR',
+          groupId: group.groupId,
+          bagId: bag.bagId,
+          order: order++,
+        }),
+      ];
+      for (const card of partials) if (card !== null) cards.push(card);
+    }
+
+    // 복용시점 — 1일 3회이면 아침·점심·저녁 표현을 사용한다.
+    if (timing !== null) {
+      const meals = times === null ? null : mealsLabel(times);
+      const isMealBased = timing === 'AFTER_MEAL_30' || timing === 'BEFORE_MEAL_30';
+      const timingCard =
+        isMealBased && meals !== null && times === 3
+          ? buildCard({
+              type: 'TIMING',
+              templateId: 'TIMING_MEALS_V1',
+              slots: { timing: timingLabel(timing), timingCode: timing, meals, minutes: 30 },
+              required: true,
+              sourceType: 'BAG_OCR',
+              groupId: group.groupId,
+              bagId: bag.bagId,
+              order: order++,
+              overrideText:
+                timing === 'AFTER_MEAL_30'
+                  ? `${meals} 식사 후 30분에 드세요.`
+                  : `${meals} 식사 전 30분에 드세요.`,
+            })
+          : buildCard({
+              type: 'TIMING',
+              templateId: 'TIMING_V1',
+              slots: { timing: timingLabel(timing), timingCode: timing },
+              required: true,
+              sourceType: 'BAG_OCR',
+              groupId: group.groupId,
+              bagId: bag.bagId,
+              order: order++,
+            });
+      if (timingCard !== null) cards.push(timingCard);
+
+      if (dosing !== null && days !== null) {
+        const durationCard = buildCard({
+          type: 'DURATION',
+          templateId: 'DURATION_V1',
+          slots: { days },
+          required: false,
+          sourceType: 'BAG_OCR',
+          groupId: group.groupId,
+          bagId: bag.bagId,
+          order: order++,
+        });
+        if (durationCard !== null) cards.push(durationCard);
+      }
     }
   }
 
@@ -174,6 +233,10 @@ function asNeededCards(bag: MedicationBag, group: MedicationGroup, startOrder: n
       symptom: group.symptomText ?? '증상',
       amount: group.doseAmount.value,
       unit: group.doseUnit.value,
+      amountText:
+        group.doseAmount.value === null || group.doseUnit.value === null
+          ? null
+          : formatAmount(group.doseAmount.value, group.doseUnit.value),
     },
     required: true,
     sourceType: 'BAG_OCR',
@@ -244,13 +307,23 @@ export function composeCards(session: Session): GuidanceCard[] {
   });
   if (intro !== null) cards.push(intro);
 
+  const regularItems: RegularItem[] = [];
   for (const bag of session.bags) {
     for (const group of bag.groups) {
-      const groupCards = group.asNeeded.value
-        ? asNeededCards(bag, group, order)
-        : regularCards(bag, group, order);
-      cards.push(...groupCards);
-      order += Math.max(groupCards.length, 1);
+      if (!group.asNeeded.value) regularItems.push({ bag, group });
+    }
+  }
+  const regular = regularCards(regularItems, order);
+  cards.push(...regular);
+  order += regular.length;
+
+  for (const bag of session.bags) {
+    for (const group of bag.groups) {
+      if (group.asNeeded.value) {
+        const groupCards = asNeededCards(bag, group, order);
+        cards.push(...groupCards);
+        order += Math.max(groupCards.length, 1);
+      }
 
       if (group.pharmacistNote !== null && group.pharmacistNote.trim() !== '') {
         const note = buildCard({
@@ -287,9 +360,17 @@ export function composeCards(session: Session): GuidanceCard[] {
   });
   if (closing !== null) cards.push(closing);
 
+  // 같은 문장이 여러 그룹에서 생성되면 하나만 남긴다.
+  const seenText = new Set<string>();
+  const unique = cards.filter((card) => {
+    if (seenText.has(card.displayText)) return false;
+    seenText.add(card.displayText);
+    return true;
+  });
+
   // 이전 구성에서 약사가 바꾼 선택 상태를 같은 문장에 다시 적용한다.
   const previous = new Map(session.cards.map((card) => [card.displayText, card]));
-  return cards
+  return unique
     .map((card) => {
       const prior = previous.get(card.displayText);
       if (prior === undefined) return card;

@@ -225,6 +225,26 @@ function ReviewPage() {
                         </div>
                       </div>
 
+                      {field === 'timingCode' && ocrField.value === null && bag !== undefined && bag.timingCandidates.length > 0 && (
+                        <div className="mb-2 rounded-lg bg-brand-soft px-2.5 py-2">
+                          <p className="text-xs font-bold text-brand-dark">
+                            약봉투에 보기만 인쇄되어 있습니다. 약봉투에 표시된 항목을 선택해 주세요.
+                          </p>
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {bag.timingCandidates.map((code) => (
+                              <button
+                                key={code}
+                                type="button"
+                                className="btn-secondary min-h-10 px-3 text-sm"
+                                onClick={() => void patch({ groupId: group.groupId, field: 'timingCode', value: code })}
+                              >
+                                {TIMING_LABELS[code]}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {field === 'timingCode' ? (
                         <select
                           id={`${group.groupId}-${field}`}

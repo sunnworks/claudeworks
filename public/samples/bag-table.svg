@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="시연용 표 기반 약봉투">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f3f6fa"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="#dde3ec"/>
+  <g font-family="system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">
+    <rect x="24" y="16" width="752" height="568" rx="12" fill="url(#paper)" stroke="#c3ccda" stroke-width="2"/>
+
+    <rect x="24" y="16" width="752" height="58" rx="12" fill="#1f3765"/>
+    <rect x="24" y="58" width="752" height="16" fill="#1f3765"/>
+    <text x="400" y="55" font-size="30" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="10">조 제 약</text>
+
+    <text x="56" y="104" font-size="21" fill="#344054">환자  김OO</text>
+    <text x="56" y="134" font-size="19" fill="#667085">조제일 2026-09-21    조제번호 2026-0921-0007    서울 열린약국</text>
+
+    <rect x="56" y="150" width="688" height="38" fill="#e8eef9"/>
+    <text x="68" y="176" font-size="19" font-weight="700" fill="#344054">의약품명</text>
+    <text x="516" y="176" font-size="19" font-weight="700" fill="#344054" text-anchor="end">1회 투여량</text>
+    <text x="606" y="176" font-size="19" font-weight="700" fill="#344054" text-anchor="end">1일 투여횟수</text>
+    <text x="700" y="176" font-size="19" font-weight="700" fill="#344054" text-anchor="end">총 투약일수</text>
+
+    <rect x="56" y="188" width="688" height="38" fill="#ffffff"/>
+    <text x="68" y="214" font-size="23" font-weight="600" fill="#101828">시연용 A정</text>
+    <text x="516" y="214" font-size="23" font-weight="700" fill="#101828" text-anchor="end">1.00</text>
+    <text x="606" y="214" font-size="23" font-weight="700" fill="#101828" text-anchor="end">3</text>
+    <text x="700" y="214" font-size="23" font-weight="700" fill="#101828" text-anchor="end">3</text>
+    <rect x="56" y="226" width="688" height="38" fill="#f7f9fc"/>
+    <text x="68" y="252" font-size="23" font-weight="600" fill="#101828">시연용 B캡슐</text>
+    <text x="516" y="252" font-size="23" font-weight="700" fill="#101828" text-anchor="end">1.00</text>
+    <text x="606" y="252" font-size="23" font-weight="700" fill="#101828" text-anchor="end">3</text>
+    <text x="700" y="252" font-size="23" font-weight="700" fill="#101828" text-anchor="end">3</text>
+    <rect x="56" y="264" width="688" height="38" fill="#ffffff"/>
+    <text x="68" y="290" font-size="23" font-weight="600" fill="#101828">시연용 C정</text>
+    <text x="516" y="290" font-size="23" font-weight="700" fill="#101828" text-anchor="end">0.50</text>
+    <text x="606" y="290" font-size="23" font-weight="700" fill="#101828" text-anchor="end">3</text>
+    <text x="700" y="290" font-size="23" font-weight="700" fill="#101828" text-anchor="end">3</text>
+    <line x1="56" y1="188" x2="744" y2="188" stroke="#c3ccda" stroke-width="1.5"/>
+    <line x1="56" y1="326" x2="744" y2="326" stroke="#c3ccda" stroke-width="1.5"/>
+
+    <text x="56" y="372" font-size="23" fill="#101828">매 식 <tspan font-weight="700">전 · 간 · 후</tspan>
+      <tspan font-size="21" fill="#98a2b3">___</tspan> 시 <tspan font-size="21" fill="#98a2b3">___</tspan> 분 복용</text>
+    <text x="56" y="404" font-size="19" fill="#98a2b3">일분 / 회분   (복용시점은 약국에서 표시)</text>
+
+    <text x="56" y="452" font-size="22" font-weight="700" fill="#b42318">주의  졸음이 올 수 있음</text>
+
+    <line x1="56" y1="478" x2="744" y2="478" stroke="#eaeef4" stroke-width="2"/>
+    <text x="56" y="512" font-size="18" fill="#98a2b3">※ 시연용 가상 약봉투입니다. 실제 의약품이나 처방이 아닙니다.</text>
+    <text x="56" y="538" font-size="18" fill="#98a2b3">대한약사회 공용플랫폼 수어 복약지도 데모</text>
+
+    <g opacity="0.9">
+      <ellipse cx="640" cy="392" rx="26" ry="18" fill="#f2d6ae" stroke="#d8b184" stroke-width="2"/>
+      <ellipse cx="692" cy="392" rx="26" ry="18" fill="#f2d6ae" stroke="#d8b184" stroke-width="2"/>
+      <ellipse cx="666" cy="428" rx="26" ry="18" fill="#e9e3d6" stroke="#c9c2b2" stroke-width="2"/>
+    </g>
+  </g>
+</svg>

@@ -51,6 +51,7 @@ export class MockOCRProvider implements OCRProvider {
         imageQuality: sample.imageQuality,
         rawText: sample.rawText,
         asNeededBag: sample.asNeededBag,
+        timingCandidates: sample.timingCandidates,
         groups: sample.groups.map((group) => ({ ...group })),
         notes: sample.imageQuality.messages,
       };
@@ -62,6 +63,7 @@ export class MockOCRProvider implements OCRProvider {
       imageQuality: PASS_QUALITY,
       rawText: '',
       asNeededBag: false,
+      timingCandidates: [],
       groups: [emptyGroupFromUpload()],
       notes: [
         '샘플 모드에서는 업로드 이미지의 문자를 인식하지 않습니다. 복약정보를 직접 입력하거나 라이브 OCR 모드로 전환해 주세요.',

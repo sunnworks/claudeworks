@@ -359,3 +359,39 @@ describe('수어 아바타 샘플 영상 배정', () => {
     }
   });
 });
+
+describe('실제 표 양식 약봉투 (SAMPLE_BAG_5)', () => {
+  it('단위와 복용시점이 없으면 승인이 차단된다', async () => {
+    let session = createSession();
+    session = await addSample(session, 'SAMPLE_BAG_5');
+
+    expect(session.status).toBe('NEEDS_REVIEW');
+    const issues = validateSession(session);
+    expect(issues.some((issue) => issue.field === 'doseUnit' && issue.severity === 'BLOCKING')).toBe(true);
+    expect(issues.some((issue) => issue.field === 'timingCode' && issue.code === 'MISSING_REQUIRED')).toBe(true);
+    expect(canApprove(session, ALL_CHECKS).ok).toBe(false);
+  });
+
+  it('약사가 단위와 복용시점을 입력하면 같은 복용법끼리 묶어 안내한다', async () => {
+    let session = createSession();
+    session = await addSample(session, 'SAMPLE_BAG_5');
+
+    const groups = session.bags[0]!.groups;
+    const updates = groups.flatMap((group) => [
+      { groupId: group.groupId, field: 'doseUnit' as const, value: '정' },
+      { groupId: group.groupId, field: 'timingCode' as const, value: 'AFTER_MEAL_30' },
+    ]);
+    session = updateMedications(session.sessionId, updates);
+    expect(blockingIssues(validateSession(session))).toHaveLength(0);
+
+    session = composeSession(session.sessionId);
+    const texts = session.cards.map((card) => card.displayText);
+
+    // 1정씩 3회 3일인 두 약은 한 문장으로 묶인다.
+    expect(texts).toContain('시연용 A정, 시연용 B캡슐은 하루 3번, 한 번에 1정씩, 3일 동안 드세요.');
+    // 0.50정은 반 알로 안내하고 별도 문장으로 분리한다.
+    expect(texts).toContain('시연용 C정은 하루 3번, 한 번에 반 알씩, 3일 동안 드세요.');
+    // 복용시점 문장은 한 번만 표시한다.
+    expect(texts.filter((text) => text === '아침, 점심, 저녁 식사 후 30분에 드세요.')).toHaveLength(1);
+  });
+});

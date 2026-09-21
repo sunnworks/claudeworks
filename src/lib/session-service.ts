@@ -133,6 +133,7 @@ export function addBag(
     imageQuality: result.imageQuality,
     rawText: result.rawText,
     asNeededBag: result.asNeededBag,
+    timingCandidates: result.timingCandidates,
     groups: markDuplicates(session, groups),
     provider: result.provider,
     capturedAt: nowIso(),

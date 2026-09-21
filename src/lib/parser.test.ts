@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   detectCautionIds,
+  hasTimingCheckboxes,
   koreanToNumber,
+  parseCompactDosage,
+  parseTableRows,
+  parseTimingCandidates,
   parseAsNeeded,
   parseBagText,
   parseDoseAmount,
@@ -174,5 +178,101 @@ describe('parseBagText', () => {
     expect(parsed.doseAmount?.value).toEqual({ amount: 1, unit: '정' });
     expect(parsed.frequencyPerDay).toBeNull();
     expect(parsed.medicineNames).toContain('시연용 D정');
+  });
+});
+
+describe('실제 약봉투 양식 대응 (설계서 10 4)', () => {
+  it('조제약 복약안내표의 압축 표기를 해석한다', () => {
+    const result = parseCompactDosage('1정씩3회3일분');
+    expect(result).toEqual({
+      amount: 1,
+      unit: '정',
+      frequencyPerDay: 3,
+      durationDays: 3,
+      matched: '1정씩3회3일분',
+    });
+  });
+
+  it('공백이 있는 압축 표기와 소수 표기를 해석한다', () => {
+    expect(parseCompactDosage('0.5정씩 3회 3일분')?.amount).toBe(0.5);
+    expect(parseCompactDosage('2포씩2회5일분')).toMatchObject({
+      amount: 2,
+      unit: '포',
+      frequencyPerDay: 2,
+      durationDays: 5,
+    });
+  });
+
+  it('압축 표기가 아니면 null', () => {
+    expect(parseCompactDosage('밀폐용기, 실온보관')).toBeNull();
+    expect(parseCompactDosage('1정씩')).toBeNull();
+  });
+
+  it('약품명과 압축 표기가 한 행에 있는 표를 해석한다', () => {
+    const rows = parseTableRows(
+      [
+        '약품사진  약품명  복약안내(투약량/횟수/일수)  주의사항',
+        '알비스정  1정씩3회3일분  밀폐용기, 실온보관',
+        '모리트린정  1정씩3회3일분',
+      ].join('\n'),
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      medicineName: '알비스정',
+      doseAmount: 1,
+      doseUnit: '정',
+      frequencyPerDay: 3,
+      durationDays: 3,
+    });
+    expect(rows[0]?.cautionIds).toContain('STORAGE_ROOM_TEMP');
+    expect(rows[1]?.medicineName).toBe('모리트린정');
+  });
+
+  it('숫자 열이 분리된 표에서는 단위를 만들어내지 않는다', () => {
+    const rows = parseTableRows(
+      ['의약품명  1회 투여량  1일 투여횟수  총 투약일수', '시연용 A정  1.00  3  3', '시연용 C정  0.50  3  3'].join(
+        '\n',
+      ),
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ medicineName: '시연용 A정', doseAmount: 1, doseUnit: '', frequencyPerDay: 3 });
+    expect(rows[1]?.doseAmount).toBe(0.5);
+  });
+
+  it('표 머리글은 행으로 읽지 않는다', () => {
+    expect(parseTableRows('의약품명  1회 투여량  1일 투여횟수  총 투약일수')).toHaveLength(0);
+  });
+
+  it('복용시점 체크 보기를 후보로만 추출한다', () => {
+    const bag = [
+      '조 제 약   1일   회   일분',
+      '매   시간마다   포(정)씩 복용',
+      '○ 식후30분   ○ 공복시   ○ 식전30분',
+      '○ 식전즉시   ○ 식후즉시   ○ 취침전',
+    ].join('\n');
+    const candidates = parseTimingCandidates(bag);
+    expect(candidates).toEqual([
+      'AFTER_MEAL_30',
+      'BEFORE_MEAL_30',
+      'AFTER_MEAL',
+      'BEFORE_MEAL',
+      'EMPTY_STOMACH',
+      'BEDTIME',
+    ]);
+    expect(hasTimingCheckboxes(bag)).toBe(true);
+  });
+
+  it('체크 양식에서는 복용시점을 단정하지 않는다', () => {
+    const bag = ['알비스정  1정씩3회3일분', '○ 식후30분   ○ 공복시   ○ 취침전'].join('\n');
+    const parsed = parseBagText(bag);
+    // 보기가 여러 개 인쇄된 양식이므로 값을 만들지 않고 약사 선택을 요구한다.
+    expect(parsed.timing).toBeNull();
+    expect(parsed.timingCandidates).toContain('AFTER_MEAL_30');
+    expect(parsed.tableRows).toHaveLength(1);
+  });
+
+  it('보기가 하나뿐인 인쇄 문구는 그대로 읽는다', () => {
+    const parsed = parseBagText('1회 1포 / 1일 3회 / 3일분 / 식후 30분');
+    expect(parsed.timing?.value).toBe('AFTER_MEAL_30');
   });
 });

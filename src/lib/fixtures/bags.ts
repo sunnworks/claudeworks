@@ -39,6 +39,8 @@ export interface SampleBag {
   imageQuality: ImageQuality;
   rawText: string;
   groups: SampleGroup[];
+  /** 복용시점 보기 후보 — 약봉투에 보기만 인쇄된 경우 약사가 선택한다 */
+  timingCandidates: TimingCode[];
 }
 
 const PASS_QUALITY: ImageQuality = {
@@ -79,6 +81,7 @@ export const SAMPLE_BAGS: SampleBag[] = [
     imageRef: '/samples/bag-regular.svg',
     asNeededBag: false,
     imageQuality: PASS_QUALITY,
+    timingCandidates: [],
     rawText:
       '서울 열린약국 / 환자 김OO / 조제일 2026년 9월 21일\n' +
       '시연용 A정  시연용 B캡슐  시연용 C정\n' +
@@ -149,6 +152,7 @@ export const SAMPLE_BAGS: SampleBag[] = [
     imageRef: '/samples/bag-asneeded.svg',
     asNeededBag: true,
     imageQuality: PASS_QUALITY,
+    timingCandidates: [],
     rawText:
       '서울 열린약국 / 필요시약\n시연용 D정\n증상이 있을 때 1회 1정\n주의  최소 4시간 간격을 두고 복용',
     groups: [
@@ -215,6 +219,7 @@ export const SAMPLE_BAGS: SampleBag[] = [
     imageRef: '/samples/bag-blur.svg',
     asNeededBag: false,
     imageQuality: BLUR_QUALITY,
+    timingCandidates: [],
     rawText: '서울 열린약국 / 1회 ?포 / 1일 ?회 / ?일분 / 식후 ?분',
     groups: [
       {
@@ -280,6 +285,7 @@ export const SAMPLE_BAGS: SampleBag[] = [
     imageRef: '/samples/bag-glare.svg',
     asNeededBag: false,
     imageQuality: GLARE_QUALITY,
+    timingCandidates: [],
     rawText:
       '서울 열린약국 / 시연용 E정\n1회 1정 / 1일 2회(?) / 5일분 / 취침 전\n주의  운전 주의',
     groups: [
@@ -336,6 +342,160 @@ export const SAMPLE_BAGS: SampleBag[] = [
         },
         symptomText: null,
         cautionIds: ['DROWSINESS', 'DRIVING'],
+      },
+    ],
+  },
+  {
+    sampleId: 'SAMPLE_BAG_5',
+    label: '샘플 약봉투 5 · 조제약 표 양식 (실제 형태)',
+    caseTag: '표 양식',
+    description: '의약품명·1회 투여량·1일 투여횟수·총 투약일수 표 / 복용시점은 약사 선택',
+    imageRef: '/samples/bag-table.svg',
+    asNeededBag: false,
+    imageQuality: {
+      status: 'REVIEW',
+      blur: 0.18,
+      glare: 0.12,
+      cropped: false,
+      rotationDeg: 1.2,
+      messages: ['표 안의 작은 숫자를 약봉투 원문과 대조해 주세요'],
+    },
+    // 실제 약봉투는 복용시점을 보기 중 체크·기입으로 표시하므로 값을 만들지 않고 후보만 제시한다.
+    timingCandidates: ['AFTER_MEAL_30', 'AFTER_MEAL', 'BEFORE_MEAL_30', 'BEFORE_MEAL'],
+    rawText:
+      '조 제 약\n' +
+      '환자  김OO   조제일 2026-09-21   조제번호 2026-0921-0007   서울 열린약국\n' +
+      '의약품명  1회 투여량  1일 투여횟수  총 투약일수\n' +
+      '시연용 A정  1.00  3  3\n' +
+      '시연용 B캡슐  1.00  3  3\n' +
+      '시연용 C정  0.50  3  3\n' +
+      '매 식 전 · 간 · 후 ___ 시 ___ 분 복용\n' +
+      '주의  졸음이 올 수 있음',
+    groups: [
+      {
+        medicineName: {
+          value: '시연용 A정',
+          confidence: 0.92,
+          originalText: '시연용 A정',
+          normalizedText: '시연용 A정',
+          bbox: { x: 0.07, y: 0.315, w: 0.55, h: 0.062 },
+        },
+        doseAmount: {
+          value: 1,
+          confidence: 0.94,
+          originalText: '1.00',
+          normalizedText: '1',
+          bbox: { x: 0.55, y: 0.315, w: 0.1, h: 0.062 },
+        },
+        // 표에는 단위가 없으므로 추정하지 않고 약사 확인을 요구한다.
+        doseUnit: { value: null, confidence: 0, originalText: '', normalizedText: '', bbox: null },
+        frequencyPerDay: {
+          value: 3,
+          confidence: 0.93,
+          originalText: '3',
+          normalizedText: '1일 3회',
+          bbox: { x: 0.66, y: 0.315, w: 0.1, h: 0.062 },
+        },
+        durationDays: {
+          value: 3,
+          confidence: 0.92,
+          originalText: '3',
+          normalizedText: '3일',
+          bbox: { x: 0.78, y: 0.315, w: 0.1, h: 0.062 },
+        },
+        timingCode: {
+          value: null,
+          confidence: 0,
+          originalText: '매 식 전 · 간 · 후 ___ 시 ___ 분',
+          normalizedText: '',
+          bbox: { x: 0.07, y: 0.585, w: 0.62, h: 0.06 },
+        },
+        asNeeded: { value: false, confidence: 0.98, originalText: '', normalizedText: '상시 복용', bbox: null },
+        symptomText: null,
+        cautionIds: ['DROWSINESS'],
+      },
+      {
+        medicineName: {
+          value: '시연용 B캡슐',
+          confidence: 0.9,
+          originalText: '시연용 B캡슐',
+          normalizedText: '시연용 B캡슐',
+          bbox: { x: 0.07, y: 0.378, w: 0.55, h: 0.062 },
+        },
+        doseAmount: {
+          value: 1,
+          confidence: 0.94,
+          originalText: '1.00',
+          normalizedText: '1',
+          bbox: { x: 0.55, y: 0.378, w: 0.1, h: 0.062 },
+        },
+        doseUnit: { value: null, confidence: 0, originalText: '', normalizedText: '', bbox: null },
+        frequencyPerDay: {
+          value: 3,
+          confidence: 0.93,
+          originalText: '3',
+          normalizedText: '1일 3회',
+          bbox: { x: 0.66, y: 0.378, w: 0.1, h: 0.062 },
+        },
+        durationDays: {
+          value: 3,
+          confidence: 0.91,
+          originalText: '3',
+          normalizedText: '3일',
+          bbox: { x: 0.78, y: 0.378, w: 0.1, h: 0.062 },
+        },
+        timingCode: {
+          value: null,
+          confidence: 0,
+          originalText: '매 식 전 · 간 · 후 ___ 시 ___ 분',
+          normalizedText: '',
+          bbox: { x: 0.07, y: 0.585, w: 0.62, h: 0.06 },
+        },
+        asNeeded: { value: false, confidence: 0.98, originalText: '', normalizedText: '상시 복용', bbox: null },
+        symptomText: null,
+        cautionIds: [],
+      },
+      {
+        medicineName: {
+          value: '시연용 C정',
+          confidence: 0.91,
+          originalText: '시연용 C정',
+          normalizedText: '시연용 C정',
+          bbox: { x: 0.07, y: 0.44, w: 0.55, h: 0.062 },
+        },
+        // 0.50 → 반 알. 실제 약봉투의 소수 표기를 반영한다.
+        doseAmount: {
+          value: 0.5,
+          confidence: 0.79,
+          originalText: '0.50',
+          normalizedText: '0.5',
+          bbox: { x: 0.55, y: 0.44, w: 0.1, h: 0.062 },
+        },
+        doseUnit: { value: null, confidence: 0, originalText: '', normalizedText: '', bbox: null },
+        frequencyPerDay: {
+          value: 3,
+          confidence: 0.93,
+          originalText: '3',
+          normalizedText: '1일 3회',
+          bbox: { x: 0.66, y: 0.44, w: 0.1, h: 0.062 },
+        },
+        durationDays: {
+          value: 3,
+          confidence: 0.9,
+          originalText: '3',
+          normalizedText: '3일',
+          bbox: { x: 0.78, y: 0.44, w: 0.1, h: 0.062 },
+        },
+        timingCode: {
+          value: null,
+          confidence: 0,
+          originalText: '매 식 전 · 간 · 후 ___ 시 ___ 분',
+          normalizedText: '',
+          bbox: { x: 0.07, y: 0.585, w: 0.62, h: 0.06 },
+        },
+        asNeeded: { value: false, confidence: 0.98, originalText: '', normalizedText: '상시 복용', bbox: null },
+        symptomText: null,
+        cautionIds: [],
       },
     ],
   },

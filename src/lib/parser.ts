@@ -64,10 +64,16 @@ export function koreanToNumber(raw: string): number | null {
   return null;
 }
 
-/** 아라비아 숫자 또는 한글 수사를 숫자로 변환 */
+/**
+ * 아라비아 숫자 또는 한글 수사를 숫자로 변환.
+ * 실제 약봉투의 표 기반 표기(1.00, 0.50)를 위해 소수를 지원한다.
+ */
 export function toNumber(raw: string): number | null {
   const text = raw.trim();
-  if (/^\d+$/.test(text)) return Number(text);
+  if (/^\d+(?:\.\d+)?$/.test(text)) {
+    const value = Number(text);
+    return Number.isFinite(value) ? value : null;
+  }
   return koreanToNumber(text);
 }
 
@@ -294,6 +300,132 @@ export function detectCautionIds(text: string): CautionId[] {
   return [...ids];
 }
 
+/** 표 기반 약봉투의 한 행 */
+export interface ParsedTableRow {
+  medicineName: string | null;
+  doseAmount: number;
+  doseUnit: string;
+  frequencyPerDay: number;
+  durationDays: number;
+  cautionIds: CautionId[];
+  originalText: string;
+}
+
+const COMPACT_UNIT = '정|포|캡슐|캅셀|알|매|mL|ml|스푼';
+
+/**
+ * 조제약 복약안내표의 압축 표기를 해석한다.
+ * 예: "1정씩3회3일분", "0.5정씩 3회 3일분", "2포씩2회5일분"
+ * (설계서 10 4 표 기반 / 문장 기반 대응)
+ */
+export function parseCompactDosage(
+  text: string,
+): { amount: number; unit: string; frequencyPerDay: number; durationDays: number; matched: string } | null {
+  const pattern = new RegExp(
+    `(\\d+(?:\\.\\d+)?)\\s*(${COMPACT_UNIT})\\s*씩?\\s*(\\d+)\\s*(?:회|번)\\s*(\\d+)\\s*일\\s*분?`,
+    'i',
+  );
+  const match = pattern.exec(text);
+  if (match === null) return null;
+
+  const amount = toNumber(match[1] ?? '');
+  const unitRaw = match[2] ?? '';
+  const unit = UNIT_ALIASES[unitRaw] ?? UNIT_ALIASES[unitRaw.toLowerCase()];
+  const frequencyPerDay = toNumber(match[3] ?? '');
+  const durationDays = toNumber(match[4] ?? '');
+
+  if (amount === null || frequencyPerDay === null || durationDays === null || unit === undefined) return null;
+  if (amount <= 0 || frequencyPerDay <= 0 || durationDays <= 0) return null;
+
+  return { amount, unit, frequencyPerDay, durationDays, matched: match[0].trim() };
+}
+
+/**
+ * 표 기반 약봉투를 행 단위로 해석한다.
+ * 지원 형태
+ *   1) 약품명 + 압축 표기      : "알비스정  1정씩3회3일분  밀폐용기, 실온보관"
+ *   2) 약품명 + 숫자 열 3개    : "시연용 A정  1.00  3  3"
+ * 단위가 없는 숫자 열 형태는 단위를 만들어내지 않고 null로 남겨 약사 확인을 요구한다.
+ */
+export function parseTableRows(rawText: string): ParsedTableRow[] {
+  const rows: ParsedTableRow[] = [];
+
+  for (const line of rawText.split(/\n/)) {
+    const text = line.trim();
+    if (text === '') continue;
+    // 표 머리글은 건너뛴다.
+    if (/의약품명|약품명|복약안내|투여량|투약일수|주의사항|약품사진/.test(text)) continue;
+
+    const compact = parseCompactDosage(text);
+    if (compact !== null) {
+      const name = text.slice(0, text.indexOf(compact.matched)).trim().replace(/\s{2,}/g, ' ');
+      rows.push({
+        medicineName: name === '' ? null : name,
+        doseAmount: compact.amount,
+        doseUnit: compact.unit,
+        frequencyPerDay: compact.frequencyPerDay,
+        durationDays: compact.durationDays,
+        cautionIds: detectCautionIds(text),
+        originalText: text,
+      });
+      continue;
+    }
+
+    // 숫자 열 3개 형태: 이름 + 1회량 + 1일횟수 + 일수
+    const columns = /^(.*?)[\s|]+(\d+(?:\.\d+)?)[\s|]+(\d+)[\s|]+(\d+)\s*(?:일|일분)?$/.exec(text);
+    if (columns !== null) {
+      const amount = toNumber(columns[2] ?? '');
+      const frequencyPerDay = toNumber(columns[3] ?? '');
+      const durationDays = toNumber(columns[4] ?? '');
+      const name = (columns[1] ?? '').trim();
+      if (amount !== null && frequencyPerDay !== null && durationDays !== null && amount > 0) {
+        // 단위는 열에 없으므로 추정하지 않고 빈 값으로 두어 약사 확인을 요구한다.
+        rows.push({
+          medicineName: name === '' ? null : name,
+          doseAmount: amount,
+          doseUnit: '',
+          frequencyPerDay,
+          durationDays,
+          cautionIds: detectCautionIds(text),
+          originalText: text,
+        });
+      }
+    }
+  }
+
+  return rows;
+}
+
+/** 실제 약봉투 하단의 복용시점 체크 항목 */
+const TIMING_CHECKBOX_OPTIONS: { pattern: RegExp; code: TimingCode }[] = [
+  { pattern: /식후\s*30\s*분/, code: 'AFTER_MEAL_30' },
+  { pattern: /식전\s*30\s*분/, code: 'BEFORE_MEAL_30' },
+  { pattern: /식후\s*즉시/, code: 'AFTER_MEAL' },
+  { pattern: /식전\s*즉시/, code: 'BEFORE_MEAL' },
+  { pattern: /공복\s*시/, code: 'EMPTY_STOMACH' },
+  { pattern: /취침\s*전/, code: 'BEDTIME' },
+];
+
+/**
+ * 복용시점 체크 항목의 후보를 추출한다.
+ *
+ * 실제 약봉투는 복용시점을 인쇄된 보기 중 하나에 체크·도장으로 표시하는 경우가 많고
+ * 어떤 항목이 선택됐는지는 OCR로 판별하기 어렵다. 따라서 값을 추정하지 않고
+ * 후보만 돌려주어 약사가 선택하게 한다 (설계서 10 4 아이콘 기반 / 12 1 원칙 2).
+ */
+export function parseTimingCandidates(rawText: string): TimingCode[] {
+  const found: TimingCode[] = [];
+  for (const option of TIMING_CHECKBOX_OPTIONS) {
+    if (option.pattern.test(rawText) && !found.includes(option.code)) found.push(option.code);
+  }
+  return found;
+}
+
+/** 인쇄된 보기 목록인지 판단한다. 보기가 2개 이상이면 체크 양식으로 본다. */
+export function hasTimingCheckboxes(rawText: string): boolean {
+  return parseTimingCandidates(rawText).length >= 2;
+}
+
 export interface ParsedBagText {
   doseAmount: ParsedValue<{ amount: number; unit: string }> | null;
   frequencyPerDay: ParsedValue<number> | null;
@@ -302,18 +434,29 @@ export interface ParsedBagText {
   asNeeded: ParsedValue<{ asNeeded: boolean; symptom: string | null }> | null;
   medicineNames: string[];
   cautionIds: CautionId[];
+  /** 표 기반 약봉투의 행 (설계서 10 4) */
+  tableRows: ParsedTableRow[];
+  /** 복용시점 체크 양식의 후보 — 값이 있으면 약사가 선택한다 */
+  timingCandidates: TimingCode[];
 }
 
 /** 라이브 OCR의 rawText를 구조화한다. 실패한 필드는 null로 남겨 약사 입력을 요구한다. */
 export function parseBagText(rawText: string): ParsedBagText {
   const text = rawText.replace(/\r/g, '').replace(/[ \t]+/g, ' ');
+  const tableRows = parseTableRows(text);
+  const timingCandidates = parseTimingCandidates(text);
+  const checkboxForm = hasTimingCheckboxes(text);
+
   return {
     doseAmount: parseDoseAmount(text),
     frequencyPerDay: parseFrequencyPerDay(text),
     durationDays: parseDurationDays(text),
-    timing: parseTimingCode(text),
+    // 보기 목록만 인쇄된 체크 양식에서는 복용시점을 단정하지 않는다.
+    timing: checkboxForm ? null : parseTimingCode(text),
     asNeeded: parseAsNeeded(text),
     medicineNames: parseMedicineNames(text),
     cautionIds: detectCautionIds(text),
+    tableRows,
+    timingCandidates,
   };
 }
