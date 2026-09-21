@@ -111,6 +111,7 @@
   .step-sep { color: var(--line); }
 
   main.page { flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 16px; padding-block: 18px; }
+  .page-head h1:focus { outline: none; }
   .page-head h1 { font-size: 21px; line-height: 1.35; margin: 0; text-wrap: balance; letter-spacing: -.015em; }
   .page-head p { margin: 6px 0 0; color: var(--ink-soft); font-size: 14px; }
 
@@ -289,8 +290,6 @@
   .pt-center h2 { margin: 0; font-size: clamp(24px, 4vw, 36px); text-wrap: balance; }
   .pt-center p { margin: 0; font-size: clamp(16px, 2.2vw, 21px); color: rgba(255,255,255,.8); }
   .pt-glyph { font-size: 58px; line-height: 1; }
-  .qgrid { display: grid; gap: 8px; grid-template-columns: 1fr; width: 100%; max-width: 720px; }
-  @media (min-width: 620px) { .qgrid { grid-template-columns: 1fr 1fr; } }
   .glosses { position: absolute; bottom: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
   .gloss { padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 700; background: rgba(255,255,255,.14); color: rgba(255,255,255,.72); }
   .gloss[data-on="1"] { background: #fff; color: var(--ink); }
@@ -981,7 +980,7 @@ function composeCards(session) {
     if (c) push('CAUTION', c.text, c.gloss, { required: false, selected: true, source: 'REVIEWED_PHRASE_DB' });
   }
 
-  push('CLOSING', '궁금한 점이 있으면 약사에게 질문해 주세요.', ['궁금하다', '있다', '약사', '질문', '하다'], { source: 'REVIEWED_PHRASE_DB' });
+  push('CLOSING', '설명을 다시 보고 싶으시면 QR을 촬영해서 집에서도 보실 수 있습니다. (48시간 동안 유효)', ['설명', '다시', '보다', '원하다', 'QR', '찍다', '집', '보다', '가능', '48시간'], { source: 'REVIEWED_PHRASE_DB' });
 
   const seenText = new Set();
   return cards.filter((c) => (seenText.has(c.text) ? false : (seenText.add(c.text), true)))
@@ -1991,13 +1990,42 @@ function render() {
   else if (S.route === 'complete') html = viewComplete();
   else html = viewDashboard();
 
+  /* 같은 화면 안에서 다시 그릴 때(체크·입력 등)는 보던 위치를 지키고,
+     다른 화면으로 넘어갈 때만 맨 위에서 시작한다 */
+  const routeKey = (S.session ? S.session.id : '-') + '/' + (shareMatch ? 'share' : S.route);
+  routeChanged = routeKey !== lastRouteKey;
+  lastRouteKey = routeKey;
+
   parkVideos();
   app.innerHTML = html;
   S.flash = null;
+  if (routeChanged) scrollToTop();
   afterRender();
 }
 
+let lastRouteKey = null;
+let routeChanged = false;
+
+/** 화면을 넘길 때 맨 위로 되돌린다 (브라우저마다 스크롤 주체가 달라 모두 처리한다) */
+function scrollToTop() {
+  try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch (_) { window.scrollTo(0, 0); }
+  const root = document.scrollingElement || document.documentElement;
+  if (root) root.scrollTop = 0;
+  if (document.body) document.body.scrollTop = 0;
+  document.querySelectorAll('.patient.scroll, main.page').forEach((el) => { el.scrollTop = 0; });
+}
+
 function afterRender() {
+  /* 새 화면으로 넘어왔으면 제목에 초점을 두어 키보드·화면낭독기가 처음부터 읽게 한다 */
+  if (routeChanged) {
+    routeChanged = false;
+    const head = document.querySelector('.page-head h1, .pt-center h2, .patient h2');
+    if (head) {
+      head.setAttribute('tabindex', '-1');
+      try { head.focus({ preventScroll: true }); } catch (_) {}
+    }
+  }
+
   /* 원문 강조: 필드에 포커스·호버하면 약봉투의 해당 영역을 강조한다 */
   document.querySelectorAll('.field[data-hl]').forEach((el) => {
     const raw = el.getAttribute('data-hl');
