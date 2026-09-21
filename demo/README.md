@@ -11,6 +11,20 @@
 # → dist/수어복약지도데모.zip
 ```
 
+## 사용 설명서
+
+`demo/사용설명서.pdf` (A4 42쪽) — 압축 풀기부터 시연 마무리까지, 화면 캡처 30장과 함께
+단계별 사용법, 시연 멘트, 문제 해결 방법을 담았습니다. 배포용 ZIP에도 함께 들어갑니다.
+
+원본은 `demo/manual/사용설명서.html` 이고, PDF는 이렇게 다시 만듭니다.
+
+```bash
+node scripts/build-manual-pdf.mjs        # → demo/사용설명서.pdf
+```
+
+한글 본문은 `demo/manual/fonts` 의 Noto Sans KR(woff2)을 `@font-face`로 심어 씁니다.
+PDF 생성 라이브러리의 내장 폰트에는 한글 글리프가 없어 HTML → Chromium 방식을 씁니다.
+
 ## 시연 흐름
 
 약봉투 읽기 → 내용 확인 → 안내 문장(① 확인 → ② 주의사항 추가) → 수어 안내 → 완료(48시간 다시보기 QR)

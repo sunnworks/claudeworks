@@ -11,6 +11,7 @@ mkdir -p "$OUT/$NAME"
 
 cp demo/index.html "$OUT/$NAME/index.html"
 cp demo/먼저읽어주세요.txt "$OUT/$NAME/먼저읽어주세요.txt"
+cp demo/사용설명서.pdf "$OUT/$NAME/사용설명서.pdf"
 cp -r public/avatar-samples "$OUT/$NAME/avatar-samples"
 cp -r public/samples "$OUT/$NAME/samples"
 

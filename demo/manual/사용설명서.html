@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>수어 복약지도 시연 앱 사용 설명서</title>
+<style>
+  @font-face { font-family: 'NSKR'; font-weight: 400; src: url('fonts/noto-sans-kr-latin-400-normal.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2122, U+2190-2193, U+2212; }
+  @font-face { font-family: 'NSKR'; font-weight: 400; src: url('fonts/noto-sans-kr-korean-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'NSKR'; font-weight: 700; src: url('fonts/noto-sans-kr-latin-700-normal.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2122, U+2190-2193, U+2212; }
+  @font-face { font-family: 'NSKR'; font-weight: 700; src: url('fonts/noto-sans-kr-korean-700-normal.woff2') format('woff2'); }
+
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+  @page :first { margin: 0; }
+
+  :root {
+    --ink: #10203a; --soft: #55657f; --line: #d3dce8; --brand: #0d5bd4; --brand-soft: #eaf1fd;
+    --ok: #0f7b4f; --ok-soft: #e4f5ec; --warn: #97540b; --warn-soft: #fdf1dd; --bad: #ad2318; --bad-soft: #fdeceb;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: 'NSKR', sans-serif; color: var(--ink); font-size: 10.2pt; line-height: 1.75; }
+
+  /* ── 표지 ── */
+  .cover { height: 281mm; padding: 34mm 22mm; display: flex; flex-direction: column;
+           background: linear-gradient(160deg, #0b1f45 0%, #0d5bd4 62%, #2f7df0 100%); color: #fff; }
+  .cover .tag { align-self: flex-start; border: 1.4pt solid rgba(255,255,255,.55); border-radius: 999px;
+                padding: 2.6mm 6mm; font-size: 9.6pt; font-weight: 700; letter-spacing: .04em; }
+  .cover h1 { margin: 16mm 0 0; font-size: 31pt; line-height: 1.26; font-weight: 700; letter-spacing: -.02em; }
+  .cover .sub { margin: 7mm 0 0; font-size: 12.4pt; line-height: 1.7; color: rgba(255,255,255,.9); }
+  .cover .rule { margin: 13mm 0; height: 1.2pt; background: rgba(255,255,255,.42); }
+  .cover dl { margin: 0; display: grid; grid-template-columns: 28mm 1fr; gap: 3mm 0; font-size: 10.4pt; }
+  .cover dt { color: rgba(255,255,255,.68); }
+  .cover dd { margin: 0; font-weight: 700; }
+  .cover .foot { margin-top: auto; font-size: 9.6pt; line-height: 1.85; color: rgba(255,255,255,.82); }
+  .cover .foot strong { color: #fff; }
+
+  /* ── 본문 ── */
+  h2 { font-size: 16pt; margin: 0 0 3mm; padding-bottom: 2.6mm; border-bottom: 2.2pt solid var(--brand);
+       letter-spacing: -.01em; break-after: avoid; }
+  h2 .no { display: inline-block; min-width: 9.6mm; height: 9.6mm; line-height: 9.6mm; text-align: center;
+           background: var(--brand); color: #fff; border-radius: 50%; font-size: 11pt; margin-right: 3mm; vertical-align: 1mm; }
+  h3 { font-size: 12.2pt; margin: 8mm 0 2.5mm; letter-spacing: -.01em; break-after: avoid; }
+  h3 .step { display: inline-block; background: var(--brand-soft); color: var(--brand);
+             border-radius: 4px; padding: 0.4mm 2.4mm; font-size: 9.4pt; margin-right: 2mm; vertical-align: .6mm; }
+  h4 { font-size: 10.8pt; margin: 5mm 0 1.6mm; break-after: avoid; }
+  p { margin: 0 0 2.6mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 6.4mm; }
+  li { margin-bottom: 1.4mm; }
+  strong { font-weight: 700; }
+  code, .key { font-family: 'NSKR', sans-serif; background: #eef2f8; border: .7pt solid var(--line);
+               border-radius: 3px; padding: .3mm 1.6mm; font-size: 9.4pt; font-weight: 700; white-space: nowrap; }
+  .btnref { background: var(--brand); color: #fff; border-radius: 4px; padding: .5mm 2.2mm; font-size: 9.4pt;
+            font-weight: 700; white-space: nowrap; }
+  section { break-inside: auto; }
+  .page-break { break-before: page; }
+  h3.newpage { break-before: page; }
+  .avoid { break-inside: avoid; }
+
+  figure { margin: 3.5mm 0 5mm; break-inside: avoid; }
+  figure img { display: block; width: 100%; max-height: 218mm; object-fit: contain;
+               border: .8pt solid var(--line); border-radius: 2.4mm; background: #fff; }
+  figure img.half { width: 122mm; margin: 0 auto; }
+  figure img.phone { width: 62mm; margin: 0 auto; max-height: none; }
+  figcaption { margin-top: 2.2mm; font-size: 9pt; color: var(--soft); line-height: 1.6; }
+  figcaption b { color: var(--ink); }
+
+  .box { border: .9pt solid var(--line); border-left: 3.4pt solid var(--brand); border-radius: 2mm;
+         background: #f7f9fd; padding: 4mm 5mm; margin: 0 0 4mm; break-inside: avoid; }
+  .box.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .box.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+  .box.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+  .box .t { font-weight: 700; margin-bottom: 1.6mm; display: block; }
+  .box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+
+  .say { border: .9pt dashed var(--brand); border-radius: 2mm; background: #fff; padding: 4mm 5mm; margin: 0 0 4mm;
+         break-inside: avoid; }
+  .say .t { font-size: 9pt; font-weight: 700; color: var(--brand); letter-spacing: .03em; margin-bottom: 1.6mm; display: block; }
+  .say q { font-size: 10.6pt; line-height: 1.8; quotes: '\201C' '\201D'; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.6pt; margin: 0 0 4mm; break-inside: avoid; }
+  th, td { border: .7pt solid var(--line); padding: 2.4mm 3mm; text-align: left; vertical-align: top; }
+  th { background: #eef2f8; font-weight: 700; }
+  td.c, th.c { text-align: center; }
+
+  .toc { margin: 0; padding: 0; list-style: none; font-size: 11pt; }
+  .toc li { display: flex; gap: 3mm; padding: 2.6mm 0; border-bottom: .7pt dotted var(--line); }
+  .toc .n { flex: none; width: 7mm; font-weight: 700; color: var(--brand); }
+  .toc .d { flex: 1; }
+  .toc .s { color: var(--soft); font-size: 9.4pt; }
+
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 4mm 0 5mm; break-inside: avoid; }
+  .flow .n { flex: 1; border: .9pt solid var(--line); border-radius: 2mm; padding: 3.4mm 2mm; text-align: center; background: #fff; }
+  .flow .n b { display: block; font-size: 10.4pt; }
+  .flow .n span { font-size: 8.6pt; color: var(--soft); line-height: 1.5; display: block; margin-top: 1mm; }
+  .flow .a { flex: none; width: 6mm; display: flex; align-items: center; justify-content: center; color: var(--brand); font-weight: 700; }
+
+  .folder { border: .9pt solid var(--line); border-radius: 2mm; background: #fff; padding: 4mm 5mm; margin: 0 0 4mm;
+            font-size: 9.8pt; line-height: 2; break-inside: avoid; }
+  .folder .row { display: flex; gap: 2.6mm; }
+  .folder .ic { flex: none; width: 5mm; text-align: center; }
+  .folder .nm { font-weight: 700; }
+  .folder .ds { color: var(--soft); }
+  .folder .in { padding-left: 7mm; }
+
+  .hdr { position: running(hdr); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ 표지 ══════════════ -->
+<div class="cover">
+  <span class="tag">시연용 데모 · 대한약사회 소개자료</span>
+  <h1>수어 복약지도 시연 앱<br>사용 설명서</h1>
+  <p class="sub">약봉투 OCR 기반 농인 대상 수어 복약지도 서비스<br>약사용 스마트패드 데모 — 압축 풀기부터 시연 마무리까지</p>
+  <div class="rule"></div>
+  <dl>
+    <dt>배포 파일</dt><dd>수어복약지도데모.zip (약 3.4MB)</dd>
+    <dt>실행 방법</dt><dd>압축 풀고 index.html 더블클릭</dd>
+    <dt>필요 환경</dt><dd>Windows PC · Mac · 태블릿 / Chrome 또는 Edge</dd>
+    <dt>인터넷</dt><dd>연결하지 않아도 동작합니다</dd>
+    <dt>문서 기준일</dt><dd>2026년 9월 21일</dd>
+  </dl>
+  <p class="foot">
+    <strong>이 문서에 실린 모든 화면은 시연용 가상 데이터입니다.</strong> 실제 환자 정보나 처방이 아닙니다.<br>
+    수어영상은 데모용 샘플이며 자막 내용과 일치하지 않습니다.<br>
+    기획 · 개발: 케이엘큐브(KLcube) 전략기획실
+  </p>
+</div>
+
+<!-- ══════════════ 목차 ══════════════ -->
+<section class="page-break">
+  <h2>목차</h2>
+  <ul class="toc">
+    <li><span class="n">1</span><span class="d">시작하기 전에 <span class="s">— 준비물과 확인 사항</span></span></li>
+    <li><span class="n">2</span><span class="d">압축 풀고 실행하기 <span class="s">— Windows · Mac</span></span></li>
+    <li><span class="n">3</span><span class="d">화면 구성 한눈에 보기 <span class="s">— 5단계 흐름</span></span></li>
+    <li><span class="n">4</span><span class="d">단계별 사용법 <span class="s">— 시작 화면부터 QR까지, 화면 캡처와 함께</span></span></li>
+    <li><span class="n">5</span><span class="d">약봉투 예시 6종으로 더 시연하기 <span class="s">— 잘 안 읽힌 경우 포함</span></span></li>
+    <li><span class="n">6</span><span class="d">실제 약봉투를 인쇄해 촬영 시연하기</span></li>
+    <li><span class="n">7</span><span class="d">화면 크기와 기기 <span class="s">— 패드 · PC · 휴대전화</span></span></li>
+    <li><span class="n">8</span><span class="d">시연 진행 멘트 예시</span></li>
+    <li><span class="n">9</span><span class="d">문제가 생겼을 때</span></li>
+    <li><span class="n">10</span><span class="d">꼭 함께 알려야 하는 한계</span></li>
+  </ul>
+</section>
+
+<!-- ══════════════ 1 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">1</span>시작하기 전에</h2>
+
+  <h3>준비물</h3>
+  <table>
+    <tr><th style="width:32mm">항목</th><th>내용</th></tr>
+    <tr><td>파일</td><td><code>수어복약지도데모.zip</code> — 약 3.4MB. 수어영상 5개와 약봉투 예시 이미지가 모두 들어 있습니다.</td></tr>
+    <tr><td>기기</td><td>Windows PC, Mac, 안드로이드 태블릿, 아이패드 모두 가능합니다.</td></tr>
+    <tr><td>브라우저</td><td><strong>Chrome</strong> 또는 <strong>Edge</strong>를 권장합니다. Internet Explorer에서는 동작하지 않습니다.</td></tr>
+    <tr><td>인터넷</td><td><strong>필요하지 않습니다.</strong> 서버 없이 브라우저 안에서만 동작합니다.</td></tr>
+    <tr><td>설치</td><td><strong>필요하지 않습니다.</strong> 프로그램을 설치하지 않고 파일을 열기만 합니다.</td></tr>
+  </table>
+
+  <div class="box ok">
+    <span class="t">이 데모로 보여 드릴 수 있는 것</span>
+    <ul>
+      <li>약봉투를 촬영하면 복약정보를 읽어오는 흐름</li>
+      <li>읽어온 내용을 <strong>약사님이 확인하고 고치는</strong> 안전 절차</li>
+      <li>약사님의 판단으로 <strong>주의사항 안내를 덧붙이는</strong> 기능</li>
+      <li>문장마다 수어영상과 한국어 자막이 함께 재생되는 방문자 화면</li>
+      <li>방문자가 집에서 48시간 동안 다시 볼 수 있는 QR 발급</li>
+    </ul>
+  </div>
+
+  <div class="box warn">
+    <span class="t">미리 알아 두실 것</span>
+    <ul>
+      <li>화면에 보이는 약국명·환자명·의약품명은 모두 <strong>시연용 가상 데이터</strong>입니다.</li>
+      <li>수어영상은 <strong>시연용 샘플</strong>이며 자막 내용과 일치하지 않습니다. 영상 아래에 그 안내가 작게 표시됩니다.</li>
+      <li>브라우저를 닫으면 진행 중이던 안내와 QR 정보가 사라집니다. 파일로 여는 데모의 특성입니다.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════ 2 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">2</span>압축 풀고 실행하기</h2>
+
+  <h3><span class="step">Windows</span>압축 풀기</h3>
+  <ol>
+    <li><code>수어복약지도데모.zip</code> 파일을 <strong>바탕화면</strong>이나 <strong>문서</strong> 폴더에 저장합니다.</li>
+    <li>파일을 <strong>마우스 오른쪽 버튼</strong>으로 누릅니다.</li>
+    <li><span class="key">압축 풀기</span> 또는 <span class="key">모두 압축 해제</span>를 누릅니다.
+        <br><span style="color:var(--soft)">Windows 11에서는 <span class="key">모두 압축 해제</span>, Windows 10에서는 <span class="key">압축 풀기</span>로 표시됩니다.</span></li>
+    <li>나타난 창에서 <span class="key">압축 풀기</span> 버튼을 한 번 더 누릅니다. 위치는 그대로 두면 됩니다.</li>
+    <li><code>수어복약지도데모</code> 폴더가 만들어집니다. 그 폴더를 두 번 눌러 엽니다.</li>
+  </ol>
+
+  <div class="box bad">
+    <span class="t">압축을 풀지 않고 ZIP 안에서 바로 열면 동작하지 않습니다</span>
+    <p>Windows는 ZIP 파일 안을 폴더처럼 보여 주지만, 그 상태에서 <code>index.html</code>을 열면 수어영상과 약봉투 이미지를 찾지 못합니다. <strong>반드시 압축을 먼저 풀어 주세요.</strong></p>
+  </div>
+
+  <h3><span class="step">Mac</span>압축 풀기</h3>
+  <p><code>수어복약지도데모.zip</code> 파일을 <strong>두 번 누르면</strong> 같은 위치에 폴더가 자동으로 만들어집니다.</p>
+
+  <h3>폴더 안에 이런 파일들이 있습니다</h3>
+  <div class="folder">
+    <div class="row"><span class="ic">📁</span><span><span class="nm">수어복약지도데모</span></span></div>
+    <div class="in">
+      <div class="row"><span class="ic">🌐</span><span><span class="nm">index.html</span> <span class="ds">← 이 파일을 두 번 누르면 실행됩니다</span></span></div>
+      <div class="row"><span class="ic">📄</span><span><span class="nm">먼저읽어주세요.txt</span> <span class="ds">— 시연 순서 요약 메모</span></span></div>
+      <div class="row"><span class="ic">📁</span><span><span class="nm">avatar-samples</span> <span class="ds">— 수어영상 샘플 5개</span></span></div>
+      <div class="row"><span class="ic">📁</span><span><span class="nm">samples</span> <span class="ds">— 약봉투 예시 이미지 · 인쇄용 파일</span></span></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <span class="t">index.html만 따로 옮기지 마세요</span>
+    <p><code>index.html</code>은 같은 폴더에 있는 <code>avatar-samples</code>와 <code>samples</code> 폴더를 함께 사용합니다. 바탕화면에 <code>index.html</code>만 꺼내 두면 수어영상과 약봉투 이미지가 나오지 않습니다. <strong>폴더 전체를 통째로 보관하고 전달해 주세요.</strong></p>
+  </div>
+
+  <h3>실행하기</h3>
+  <ol>
+    <li>폴더 안의 <code>index.html</code>을 <strong>두 번 누릅니다.</strong></li>
+    <li>기본 브라우저로 화면이 열립니다.</li>
+    <li>Internet Explorer로 열렸다면 <code>index.html</code>을 오른쪽 버튼으로 누르고 <span class="key">연결 프로그램</span> → <span class="key">Chrome</span> 또는 <span class="key">Edge</span>를 선택해 주세요.</li>
+  </ol>
+
+  <div class="box">
+    <span class="t">전체화면으로 시연하시면 더 좋습니다</span>
+    <p>브라우저에서 <span class="key">F11</span>(Windows) 또는 <span class="key">⌃⌘F</span>(Mac)를 누르면 주소창이 사라져 실제 앱처럼 보입니다. 되돌릴 때도 같은 키를 누릅니다.</p>
+  </div>
+</section>
+
+<!-- ══════════════ 3 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">3</span>화면 구성 한눈에 보기</h2>
+  <p>이 데모는 <strong>다음 → 다음</strong>으로 이어지는 한 줄 흐름입니다. 화면 위쪽에 지금 어느 단계인지 항상 표시됩니다.</p>
+
+  <div class="flow">
+    <div class="n"><b>1 약봉투 읽기</b><span>촬영하면 복약정보를 읽어옵니다</span></div>
+    <div class="a">›</div>
+    <div class="n"><b>2 내용 확인</b><span>약사님이 비교하고 고칩니다</span></div>
+    <div class="a">›</div>
+    <div class="n"><b>3 안내 문장</b><span>문장을 정하고 주의사항을 덧붙입니다</span></div>
+    <div class="a">›</div>
+    <div class="n"><b>4 수어 안내</b><span>방문자에게 영상을 보여 드립니다</span></div>
+    <div class="a">›</div>
+    <div class="n"><b>5 완료</b><span>48시간 다시보기 QR을 드립니다</span></div>
+  </div>
+
+  <h3>화면 이동 버튼</h3>
+  <table>
+    <tr><th style="width:52mm">버튼</th><th>누르면 어디로 가는지</th></tr>
+    <tr><td><span class="btnref">← 이전으로</span></td><td>바로 앞 단계로 돌아갑니다.</td></tr>
+    <tr><td><span class="btnref">✕ 방문자 화면 닫기</span></td><td>방문자에게 보여주던 어두운 전체화면을 닫고 <strong>약사 화면</strong>으로 돌아옵니다. 처음 화면으로 가는 버튼이 아닙니다.</td></tr>
+    <tr><td><span class="btnref">처음 화면으로</span></td><td>맨 처음 화면(대시보드)으로 돌아옵니다.</td></tr>
+    <tr><td><span class="btnref">다른 약봉투 예시 해보기</span></td><td>예시 목록으로 가서 다음 사례를 이어서 시연합니다.</td></tr>
+  </table>
+
+  <h3>색으로 표시되는 확인 상태</h3>
+  <table>
+    <tr><th class="c" style="width:34mm">표시</th><th>뜻</th><th style="width:52mm">약사님이 하실 일</th></tr>
+    <tr><td class="c">✓ 잘 읽혔어요</td><td>또렷하게 읽혔습니다 (정확도 90% 이상)</td><td>그대로 진행</td></tr>
+    <tr><td class="c">! 한 번 확인</td><td>읽었지만 한 번 봐 주셔야 합니다 (75% 이상)</td><td>약봉투와 비교</td></tr>
+    <tr><td class="c">✕ 다시 확인</td><td>잘 읽지 못했습니다 (75% 미만)</td><td><strong>고쳐야 다음으로 넘어갑니다</strong></td></tr>
+    <tr><td class="c">✎ 직접 입력</td><td>아예 읽지 못했습니다</td><td><strong>직접 입력해야 넘어갑니다</strong></td></tr>
+    <tr><td class="c">✓ 내가 확인함</td><td>약사님이 직접 확인하거나 고쳤습니다</td><td>완료</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════ 4 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">4</span>단계별 사용법</h2>
+
+  <h3>시작 화면</h3>
+  <p><span class="btnref">데모계정으로 바로 시작</span>을 누릅니다. 시연에서는 아이디·비밀번호를 입력하지 않습니다.</p>
+  <figure>
+    <img src="shots/01-login.png" alt="시작 화면">
+    <figcaption><b>시작 화면.</b> 실제 서비스에서는 약국 계정으로 로그인합니다. 시연에서는 아래 버튼 하나로 바로 들어갑니다.</figcaption>
+  </figure>
+
+  <h3>처음 화면(대시보드)</h3>
+  <p><span class="btnref">📷 새 복약안내 시작</span>을 누르면 1단계로 넘어갑니다. 아래 두 버튼은 약봉투 예시를 미리 보거나 인쇄할 때 씁니다.</p>
+  <figure>
+    <img src="shots/02-dashboard.png" alt="처음 화면">
+    <figcaption><b>처음 화면.</b> 시연 중 언제든 <b>처음 화면으로</b> 버튼으로 이 화면에 돌아올 수 있습니다.</figcaption>
+  </figure>
+
+  <h3 class="newpage"><span class="step">1단계</span>약봉투 읽기</h3>
+  <p>약봉투를 카운터에 놓고 촬영하면 <strong>한 번에 먹는 양 · 하루 몇 번 · 며칠 동안 · 언제 먹는지</strong>를 읽어옵니다. 시연에서는 이미 읽은 결과를 화면에 띄워 보여 드립니다.</p>
+  <ul>
+    <li>왼쪽 — 약봉투 스캔 화면과 <strong>약봉투에서 읽은 내용</strong> 목록</li>
+    <li>오른쪽 — 앞으로의 진행 순서 안내</li>
+  </ul>
+  <p>확인하셨으면 <span class="btnref">안내 내용 확인하기 →</span>를 누릅니다.</p>
+  <figure>
+    <img src="shots/03-read.png" alt="1단계 약봉투 읽기">
+    <figcaption><b>1단계.</b> 읽어온 항목마다 <b>잘 읽혔어요 97%</b>처럼 정확도가 함께 표시됩니다. 아래쪽 <b>실제 약봉투 사진으로 해보기</b>를 펼치면 촬영·사진 불러오기로 진행할 수 있습니다(6장 참고).</figcaption>
+  </figure>
+
+  <h3 class="newpage"><span class="step">2단계</span>내용 확인</h3>
+  <p>읽어온 내용을 약봉투와 <strong>약사님이 직접 비교</strong>하는 화면입니다. 이 서비스의 안전장치가 들어 있는 단계입니다.</p>
+  <ul>
+    <li>빨간색 · 노란색으로 표시된 항목을 약봉투와 비교합니다.</li>
+    <li>다르면 <strong>입력창에서 바로 고칩니다.</strong> 고치면 <strong>✓ 내가 확인함</strong>으로 바뀝니다.</li>
+    <li>빨간색 항목이 하나라도 남아 있으면 다음으로 넘어갈 수 없습니다.</li>
+  </ul>
+  <p>모두 확인되면 <span class="btnref">다음 · 안내 문장 만들기 →</span>가 열립니다.</p>
+  <figure>
+    <img src="shots/04-review.png" alt="2단계 내용 확인">
+    <figcaption><b>2단계.</b> 화면 아래 표시줄에 <b>확인이 필요한 항목 n개</b> 또는 <b>모두 확인되었습니다</b>가 나옵니다.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/05-review-highlight.png" alt="약봉투에서 해당 위치 강조">
+    <figcaption><b>항목을 누르면 약봉투에서 그 위치를 표시해 줍니다.</b> 어디를 보고 읽은 값인지 바로 확인할 수 있어, 약봉투와 대조하기 쉽습니다.</figcaption>
+  </figure>
+
+  <h3 class="newpage"><span class="step">3단계 ①</span>만들어진 안내 문장 확인</h3>
+  <p>읽어온 복약정보로 안내 문장이 자동으로 만들어집니다. 모든 문장이 <strong>포함하기</strong>로 켜져 있습니다.</p>
+  <ul>
+    <li><strong>순서 바꾸기</strong> — 문장의 <span class="key">↑ 위로</span> / <span class="key">↓ 아래로</span>를 누릅니다.</li>
+    <li><strong>빼기</strong> — <span class="key">☑ 포함하기</span> 체크를 해제하면 <strong>제외</strong>로 바뀌고 재생되지 않습니다.</li>
+    <li>오른쪽에 <strong>방문자에게 보이는 자막</strong>이 실시간으로 미리 보입니다.</li>
+  </ul>
+  <figure>
+    <img src="shots/06-compose.png" alt="3단계 안내 문장">
+    <figcaption><b>3단계 ①.</b> 왼쪽이 문장 목록, 오른쪽이 방문자에게 보일 자막 미리보기입니다. 목록 아래에 ② 주의사항 추가 영역이 있습니다.</figcaption>
+  </figure>
+
+  <h3 class="newpage"><span class="step">3단계 ②</span>덧붙일 주의사항 추가 <span style="font-weight:400;font-size:10pt;color:var(--soft)">— 필요할 때만</span></h3>
+  <p>약봉투에 적힌 기본 복약정보 외에, 성분이나 조제 내용을 보고 <strong>약사님이 판단해 덧붙이는 안내</strong>를 문장으로 추가할 수 있습니다. 문장 목록 아래 점선 상자의 <span class="btnref">＋ 주의사항 안내 추가하기</span>를 누릅니다.</p>
+
+  <div class="box">
+    <span class="t">일반적인 안내만 하실 때는 이 단계를 건너뛰셔도 됩니다</span>
+    <p>며칠 동안, 하루 몇 번, 식전·식후 정도만 안내하시는 경우는 ①까지로 충분합니다. 이 기능은 <strong>중요한 주의사항을 자세히 덧붙이실 때</strong> 쓰는 기능입니다.</p>
+  </div>
+
+  <figure>
+    <img src="shots/07a-caution-top.png" alt="주의사항 추가 패널 위쪽">
+    <figcaption><b>패널 위쪽 — 검색창과 카테고리 버튼.</b> 증상이나 상황을 입력해 찾거나, 카테고리 9종에서 골라 들어갑니다.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/07b-caution-bottom.png" alt="주의사항 추가 패널 아래쪽">
+    <figcaption><b>패널 아래쪽 — 문장 목록과 직접 입력란.</b> 문장 오른쪽 <b>추가</b>를 누르면 안내 문장에 들어갑니다. 찾는 안내가 없으면 맨 아래에 직접 적습니다.</figcaption>
+  </figure>
+
+  <h4>방법 1 — 카테고리에서 고르기</h4>
+  <p>카테고리 <strong>9종</strong> 중 하나를 누르면 그 주제의 문장이 나옵니다. 문장 오른쪽 <span class="key">추가</span>를 누르면 안내 문장에 들어갑니다.</p>
+  <table>
+    <tr><th>카테고리</th><th>카테고리</th><th>카테고리</th></tr>
+    <tr><td>😴 졸음 · 운전</td><td>🍚 소화 · 위장</td><td>🌡 열 · 통증</td></tr>
+    <tr><td>💊 항생제</td><td>🚫 술 · 함께 먹지 않기</td><td>🥛 먹는 방법</td></tr>
+    <tr><td>📦 보관</td><td>⚠️ 이상반응</td><td>⏰ 시간을 놓쳤을 때</td></tr>
+  </table>
+  <p>전체 <strong>27개 문장</strong>이 준비되어 있습니다.</p>
+  <figure>
+    <img src="shots/08-caution-category.png" alt="졸음 카테고리 선택">
+    <figcaption><b>졸음 · 운전 카테고리를 누른 모습.</b> 해당 주제의 문장만 보입니다.</figcaption>
+  </figure>
+
+  <h4>방법 2 — 검색으로 찾기</h4>
+  <p>검색창에 <strong>졸음, 소화, 열, 보관, 술</strong>처럼 증상이나 상황을 입력하면 카테고리와 관계없이 전체에서 찾아 줍니다.</p>
+  <figure>
+    <img src="shots/09-caution-search.png" alt="소화로 검색">
+    <figcaption><b>&ldquo;소화&rdquo;로 검색한 결과.</b> 검색 중에는 카테고리 선택을 무시하고 전체에서 찾습니다.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="shots/10-caution-added.png" alt="문장 추가됨">
+    <figcaption><b>추가한 직후.</b> 위쪽에 <b>안내 문장에 추가했습니다</b> 알림이 뜨고, 추가한 문장은 목록에서 초록색 <b>추가됨</b>으로 표시됩니다. <strong>여러 개 추가할 수 있습니다.</strong></figcaption>
+  </figure>
+
+  <h4>방법 3 — 찾는 안내가 없으면 직접 입력</h4>
+  <p>패널 맨 아래 <strong>찾는 안내가 없으면 직접 입력</strong>란에 문장을 적고 <span class="btnref">🤟 수어영상 만들어 추가하기</span>를 누릅니다.</p>
+  <figure>
+    <img src="shots/11-caution-custom.png" alt="직접 입력">
+    <figcaption><b>직접 입력.</b> 최대 120자까지 적을 수 있습니다.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/12-caution-generating.png" alt="수어영상 생성 중">
+    <figcaption><b>수어영상을 만드는 중.</b> 입력한 문장에 맞는 수어영상을 만든다는 표시가 나옵니다. 실제 서비스에서는 KLcube 아바타가 그 문장의 수어를 생성합니다.</figcaption>
+  </figure>
+
+  <figure>
+    <img class="half" src="shots/13b-authored-card.png" alt="약사님이 쓴 문장 표시">
+    <figcaption style="text-align:center"><b>직접 쓰신 문장에는 ✎ 약사님이 쓴 문장 표시가 붙습니다.</b> 검수된 표준 문구와 구분됩니다.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/13-caution-done.png" alt="자막 미리보기">
+    <figcaption><b>추가가 끝난 모습 — 오른쪽 자막 미리보기.</b> 고른 문장과 직접 쓴 문장이 모두 방문자에게 보일 자막에 들어가 있습니다. 4단계에서 이 순서대로 재생됩니다.</figcaption>
+  </figure>
+
+  <h3>확인 체크 — 방문자에게 보내기 전 마지막 관문</h3>
+  <p>오른쪽 <strong>약봉투 내용과 위 문장을 확인했습니다</strong>를 체크해야 다음으로 넘어갑니다. 체크하지 않고 <span class="btnref">🤟 수어영상 보기 →</span>를 누르면 안내창이 뜹니다.</p>
+  <figure>
+    <img src="shots/14-modal.png" alt="확인 안내창">
+    <figcaption><b>확인이 먼저 필요합니다.</b> <b>확인란으로 이동</b>을 누르면 체크란으로 화면이 이동하고 파란 테두리로 강조됩니다.</figcaption>
+  </figure>
+  <div class="say">
+    <span class="t">시연 멘트</span>
+    <q>약사가 확인하지 않은 내용은 방문자에게 절대 전달되지 않습니다. 이 체크가 마지막 관문입니다.</q>
+  </div>
+
+  <h3 class="newpage"><span class="step">4단계</span>수어 안내</h3>
+  <p>방문자에게 보여 드리는 <strong>어두운 전체화면</strong>으로 바뀝니다. 약사님이 먼저 내용을 확인하신 뒤, 들고 계신 패드를 방문자에게 보여 주세요.</p>
+  <figure>
+    <img src="shots/16-patient-ready.png" alt="안내 시작 대기">
+    <figcaption><b>준비 화면.</b> <b>▶ 안내 시작</b>을 누르면 재생됩니다.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/17-patient-playing.png" alt="수어 안내 재생 중">
+    <figcaption><b>재생 중.</b> 문장마다 수어영상과 <b>큰 한국어 자막</b>이 함께 나옵니다. 아래 진행바로 어디까지 왔는지 보이고, <b>n / n 문장</b>으로 남은 문장 수를 알 수 있습니다.</figcaption>
+  </figure>
+
+  <h4>재생 조작 6가지</h4>
+  <table>
+    <tr><th style="width:36mm">버튼</th><th>기능</th></tr>
+    <tr><td><span class="key">⏸ 일시정지</span></td><td>잠시 멈춥니다. 다시 누르면 이어서 재생됩니다.</td></tr>
+    <tr><td><span class="key">⏮ 처음부터</span></td><td>첫 문장부터 다시 재생합니다.</td></tr>
+    <tr><td><span class="key">◀ 이전 문장</span></td><td>앞 문장으로 돌아갑니다.</td></tr>
+    <tr><td><span class="key">다음 문장 ▶</span></td><td>다음 문장으로 넘어갑니다.</td></tr>
+    <tr><td><span class="key">🐢 천천히</span></td><td>재생 속도를 늦춥니다. 방문자가 따라오기 어려울 때 씁니다.</td></tr>
+    <tr><td><span class="key">🏁 안내 마치기</span></td><td>안내를 끝내고 5단계 완료 화면으로 갑니다.</td></tr>
+  </table>
+
+  <div class="box ok">
+    <span class="t">영상이 바로 시작됩니다</span>
+    <p>화면을 열 때 수어영상을 미리 받아 두기 때문에 <strong>안내 시작</strong>과 <strong>다음 문장</strong>에서 기다리지 않습니다. 영상이 준비되는 동안에는 자막과 진행바도 함께 기다려, 자막이 영상보다 앞서 나가지 않습니다.</p>
+  </div>
+
+  <figure>
+    <img src="shots/18-patient-done.png" alt="안내 종료 화면">
+    <figcaption><b>마지막 문장이 끝나면 이 화면으로 자동 전환됩니다.</b> 방문자가 <b>↺ 다시 보기</b>로 처음부터 다시 볼 수 있고, <b>✓ 이해했습니다</b>를 누르면 약사님 화면에 표시됩니다.</figcaption>
+  </figure>
+
+  <h3><span class="step">5단계</span>완료 — 48시간 다시보기 QR</h3>
+  <p>방문자 화면 우측 위 <span class="btnref">✕ 방문자 화면 닫기</span> 또는 <span class="btnref">🏁 안내 마치기</span>로 약사 화면에 돌아온 뒤, <span class="btnref">안내 마치고 다시보기 QR 만들기</span>를 누릅니다.</p>
+  <figure>
+    <img src="shots/19-before-qr.png" alt="QR 만들기 전">
+    <figcaption><b>QR을 만들기 전 화면.</b> 아래 버튼을 누르면 QR이 만들어집니다.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="shots/20-complete-qr.png" alt="완료 화면 QR">
+    <figcaption><b>완료 화면.</b> 큰 QR과 <b>48시간 동안 다시 볼 수 있습니다</b>, 볼 수 있는 기한만 표시됩니다. 방문자에게 이 화면을 그대로 보여 주시면 됩니다.</figcaption>
+  </figure>
+
+  <div class="say">
+    <span class="t">시연 멘트</span>
+    <q>휴대전화로 이 QR을 촬영하시면 집에서도 같은 안내를 48시간 동안 다시 보실 수 있고, 그 뒤에는 자동으로 지워집니다. QR 주소에는 이름이나 복약정보가 들어가지 않습니다.</q>
+  </div>
+
+  <table>
+    <tr><th style="width:52mm">버튼</th><th>기능</th></tr>
+    <tr><td><span class="key">다시보기 화면 열어보기</span></td><td>방문자가 QR로 보게 될 화면을 이 자리에서 바로 열어 봅니다. <strong>파일로 여는 데모에서는 이 버튼으로 시연해 주세요.</strong></td></tr>
+    <tr><td><span class="key">QR 사용 중지</span></td><td>발급한 QR을 즉시 못 쓰게 만들고 안내 내용도 지웁니다.</td></tr>
+  </table>
+
+  <div class="box warn">
+    <span class="t">파일로 열었을 때 QR 스캔이 안 되는 이유</span>
+    <p>파일로 실행하면 QR에 담기는 주소가 <strong>그 컴퓨터 안의 파일 경로</strong>입니다. 휴대전화로 스캔해도 그 경로를 찾을 수 없어 열리지 않습니다. 시연에서는 <span class="key">다시보기 화면 열어보기</span>로 같은 화면을 보여 주세요. 휴대전화 스캔까지 시연하려면 인터넷 주소(https)로 배포해야 합니다.</p>
+  </div>
+
+  <figure>
+    <img src="shots/21-share-view.png" alt="방문자 다시보기 화면">
+    <figcaption><b>방문자가 QR로 보게 되는 다시보기 화면.</b> 약사님이 보낸 같은 안내만 다시 볼 수 있고, 남은 시간이 위쪽에 표시됩니다.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════════ 5 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">5</span>약봉투 예시 6종으로 더 시연하기</h2>
+  <p>완료 화면의 <span class="btnref">다른 약봉투 예시 해보기 →</span> 또는 처음 화면의 <span class="btnref">약봉투 예시 목록 보기</span>로 예시 목록에 갑니다. 해본 예시에는 <strong>해봤어요</strong> 표시가 붙습니다.</p>
+
+  <table>
+    <tr><th style="width:40mm">예시</th><th>보여 드릴 수 있는 것</th></tr>
+    <tr><td><strong>감기</strong> (일반 약봉투)</td><td>다 읽혀서 바로 안내까지 진행되는 기본 흐름</td></tr>
+    <tr><td><strong>표 인쇄</strong> (표로 인쇄된 약봉투)</td><td>약품별로 표에 적힌 실제 양식. 단위와 먹는 시점을 약사님이 확인해야 하는 흐름</td></tr>
+    <tr><td><strong>통증</strong> (증상 있을 때 먹는 약)</td><td>정해진 시간에 먹는 약과 따로 안내하는 흐름</td></tr>
+    <tr><td><strong>사진 흐림</strong> (흐리게 찍힌 약봉투)</td><td>다시 찍어야 하는 흐름</td></tr>
+    <tr><td><strong>불면</strong> (빛이 반사된 약봉투)</td><td>하루 몇 번이 잘 안 읽혀 고쳐야 하는 흐름</td></tr>
+    <tr><td><strong>손글씨</strong> (손으로 적은 약봉투)</td><td>글자를 거의 못 읽어 처음부터 직접 입력하는 흐름</td></tr>
+  </table>
+
+  <figure>
+    <img src="shots/22-gallery.png" alt="약봉투 예시 목록">
+    <figcaption><b>약봉투 예시 목록.</b> 각 예시를 눌러 같은 흐름을 이어서 시연할 수 있습니다.</figcaption>
+  </figure>
+
+  <h3 class="newpage">사례 A — 표로 인쇄된 약봉투</h3>
+  <p>요즘 많이 쓰는 실제 양식입니다. 약품별로 <strong>1회 투여량 / 1일 횟수 / 투약일수</strong>가 표에 적혀 있고, 복용시점은 체크 형태로 인쇄됩니다.</p>
+  <figure>
+    <img src="shots/26-case-table.png" alt="표 인쇄 약봉투">
+    <figcaption><b>표 양식 읽기 결과.</b> 약품 3개를 각각 읽어옵니다.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="shots/26-case-table-review.png" alt="표 인쇄 확인 화면">
+    <figcaption><b>확인 화면(첫 화면).</b> 표에는 <b>정·포 같은 단위가 적혀 있지 않아</b> 읽지 않고 비워 둡니다. 임의로 짐작하지 않고 약사님이 고르게 합니다. 먹는 시점도 체크 표시만 있어 후보를 제시하고 약사님이 선택합니다. 아래로 내리면 약품 3개가 각각 표시됩니다.</figcaption>
+  </figure>
+  <div class="say">
+    <span class="t">시연 멘트</span>
+    <q>없는 정보를 만들어 내지 않는 것이 이 서비스의 원칙입니다. 표에 단위가 없으면 비워 두고 약사님께 물어봅니다.</q>
+  </div>
+
+  <h3 class="newpage">사례 B — 손으로 적은 약봉투</h3>
+  <p>글자를 거의 읽지 못하는 경우입니다. 복약정보를 <strong>처음부터 직접 입력</strong>해 안내를 만들어 갑니다.</p>
+  <figure>
+    <img src="shots/25-case-handwritten.png" alt="손글씨 약봉투">
+    <figcaption><b>손글씨 약봉투 읽기 결과.</b> 읽지 못했다는 안내가 나옵니다.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="shots/25-case-handwritten-review.png" alt="손글씨 확인 화면">
+    <figcaption><b>확인 화면.</b> 모든 항목이 <b>✎ 직접 입력</b>으로 표시됩니다. 직접 입력해도 이후 흐름(안내 문장 → 수어영상 → QR)은 똑같이 진행됩니다.</figcaption>
+  </figure>
+
+  <h3>사례 C — 흐리게 찍힌 약봉투</h3>
+  <figure>
+    <img src="shots/24-case-blur.png" alt="흐린 약봉투">
+    <figcaption><b>흐린 사진.</b> <b>글자가 선명하지 않습니다 · 카메라를 고정하고 다시 촬영해 주세요</b> 안내가 나오고, 잘못된 값으로 진행되지 않도록 막습니다.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════════ 6 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">6</span>실제 약봉투를 인쇄해 촬영 시연하기</h2>
+  <p>실물 약봉투 없이도 <strong>진짜 촬영하는 장면</strong>을 보여 드릴 수 있습니다.</p>
+
+  <h3>준비</h3>
+  <ol>
+    <li>처음 화면에서 <span class="btnref">약봉투 예시 인쇄하기</span>를 누릅니다.</li>
+    <li>함께 보여줄 예시를 고르고 <span class="btnref">인쇄하기</span>를 누릅니다.</li>
+    <li><strong>A4 용지에 배율 100%</strong>로 인쇄해 카운터에 놓습니다.</li>
+  </ol>
+  <p>폴더의 <code>samples/bag-table.png</code>(표 양식)이나 <code>samples/bag-regular.png</code>(라벨 양식)을 직접 인쇄하셔도 됩니다.</p>
+
+  <figure>
+    <img src="shots/23-print.png" alt="약봉투 예시 인쇄 화면">
+    <figcaption><b>인쇄 화면.</b> 아래로 내리면 예시 6종이 인쇄용으로 나열됩니다. 인쇄물에는 시연용 예시임을 밝히는 문구가 함께 인쇄됩니다.</figcaption>
+  </figure>
+
+  <h3 class="newpage">촬영해서 넣기</h3>
+  <p>1단계 화면 아래 <strong>실제 약봉투 사진으로 해보기</strong>를 펼칩니다. 먼저 <strong>촬영 이미지에 적용할 시연 케이스</strong>를 지정한 뒤 진행합니다.</p>
+  <table>
+    <tr><th style="width:36mm">기기</th><th>방법</th></tr>
+    <tr><td>휴대전화 · 태블릿</td><td><span class="key">📱 휴대기기 카메라로 촬영</span> → 카메라 앱이 열리고 인쇄물을 촬영하면 그 사진이 약봉투 자리에 들어갑니다.</td></tr>
+    <tr><td>PC</td><td><span class="key">🖼 사진 불러오기</span> → 미리 찍어 둔 사진을 선택합니다.</td></tr>
+  </table>
+  <p>촬영한 사진이 원문 이미지로 들어가고, 지정한 케이스의 인식 결과가 적용되어 <strong>실제로 읽은 것처럼</strong> 다음 단계로 이어집니다.</p>
+
+  <div class="box warn">
+    <span class="t">카메라 미리보기가 켜지지 않는 이유</span>
+    <p>브라우저는 보안 정책상 카메라 미리보기를 <strong>https 주소 또는 localhost에서만</strong> 허용합니다. 파일로 열면 차단되므로, 위의 <span class="key">휴대기기 카메라로 촬영</span> 또는 <span class="key">사진 불러오기</span>를 사용해 주세요. 실제 카메라 미리보기가 필요하면 인터넷 주소(https)로 배포해 접속해야 합니다.</p>
+  </div>
+</section>
+
+<!-- ══════════════ 7 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">7</span>화면 크기와 기기</h2>
+  <p>기기 종류가 아니라 <strong>브라우저 창의 너비</strong>를 기준으로 화면이 바뀝니다. 창 크기를 조절하면 즉시 반영됩니다.</p>
+  <table>
+    <tr><th class="c" style="width:34mm">창 너비</th><th>화면 구성</th></tr>
+    <tr><td class="c"><strong>900px 이상</strong></td><td>2열 — 왼쪽 문장 목록, 오른쪽 방문자 자막이 나란히 보입니다. <strong>패드 가로 · PC</strong></td></tr>
+    <tr><td class="c"><strong>900px 미만</strong></td><td>1열 — 위아래로 이어서 보입니다. <strong>패드 세로 · 휴대전화</strong></td></tr>
+  </table>
+  <table>
+    <tr><th>기기</th><th class="c">해상도</th><th class="c">결과</th></tr>
+    <tr><td>아이패드 10.2 가로</td><td class="c">1080 × 810</td><td class="c">2열</td></tr>
+    <tr><td>아이패드 10.2 세로</td><td class="c">810 × 1080</td><td class="c">1열</td></tr>
+    <tr><td>갤럭시탭 가로</td><td class="c">1280 × 800</td><td class="c">2열</td></tr>
+    <tr><td>아이폰 세로</td><td class="c">390 × 844</td><td class="c">1열</td></tr>
+  </table>
+  <p>어느 크기에서도 가로 스크롤은 생기지 않고, 버튼 높이는 48px 이상으로 유지됩니다.</p>
+
+  <div class="box">
+    <span class="t">시연 팁</span>
+    <p>왼쪽 문장 목록과 오른쪽 자막이 나란히 보이는 <strong>2열 화면</strong>을 보여 드리려면 <strong>패드를 가로로 돌려서</strong> 시연하세요. 세로로 들면 1열로 바뀝니다.</p>
+  </div>
+
+  <figure>
+    <img class="phone" src="shots/27-mobile.png" alt="휴대전화 세로 화면">
+    <figcaption style="text-align:center"><b>휴대전화 세로 화면(1열).</b> 같은 내용이 위아래로 이어집니다.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════════ 8 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">8</span>시연 진행 멘트 예시</h2>
+  <p>약 3분 분량입니다. 화면 순서에 맞춰 그대로 읽으셔도 됩니다.</p>
+
+  <h4>여는 말</h4>
+  <div class="say"><q>농인 분들이 약국에서 가장 어려워하시는 건 복약지도입니다. 글로 적어 드려도 한국어 문법과 수어 문법이 달라서 정확히 전달되지 않습니다. 이 서비스는 약봉투를 촬영해서 복약정보를 읽고, 약사님이 확인한 내용만 수어영상으로 보여 드립니다.</q></div>
+
+  <h4>1단계에서</h4>
+  <div class="say"><q>약봉투를 카운터에 놓고 촬영하면 한 번에 먹는 양, 하루 몇 번, 며칠 동안, 언제 먹는지를 읽어옵니다. 항목마다 얼마나 또렷하게 읽었는지 함께 보여 드립니다.</q></div>
+
+  <h4>2단계에서</h4>
+  <div class="say"><q>여기가 이 서비스의 핵심입니다. 읽어온 내용을 약사님이 약봉투와 비교해 확인하십니다. 항목을 누르면 약봉투에서 그 위치를 표시해 드려서 대조하기 쉽습니다. 잘 읽지 못한 항목은 고치지 않으면 다음으로 넘어가지 않습니다.</q></div>
+
+  <h4>3단계에서</h4>
+  <div class="say"><q>읽어온 정보로 안내 문장이 만들어집니다. 순서를 바꾸거나 뺄 수 있습니다. 그리고 약봉투에는 없지만 약사님의 지식으로 덧붙이실 안내 — 예를 들어 졸릴 수 있으니 운전을 삼가라는 안내 — 를 여기서 추가하실 수 있습니다. 검수된 문장 27개에서 고르거나, 직접 쓰시면 그 문장에 맞는 수어영상을 새로 만들어 붙입니다.</q></div>
+
+  <h4>4단계에서</h4>
+  <div class="say"><q>약사님이 확인하신 내용만 방문자 화면으로 넘어갑니다. 문장마다 수어영상과 한국어 자막이 함께 나오고, 방문자가 따라오기 어려우면 천천히 버튼으로 속도를 줄일 수 있습니다.</q></div>
+
+  <h4>5단계에서</h4>
+  <div class="say"><q>약국에서 한 번 보고 나가시면 집에서 잊어버리십니다. 그래서 QR을 드립니다. 휴대전화로 촬영하시면 48시간 동안 같은 안내를 다시 보실 수 있고, 그 뒤에는 자동으로 지워집니다. QR 주소에는 이름이나 복약정보가 들어가지 않습니다.</q></div>
+
+  <h4>맺는 말</h4>
+  <div class="say"><q>이 서비스는 병명을 짐작하거나 복용법을 스스로 만들지 않습니다. 약봉투에 적힌 내용과 약사님이 확인·추가한 내용만 전달합니다. 수어 안내만으로 복약지도 의무가 대신되는 것도 아닙니다. 약사님의 복약지도를 농인 방문자에게 정확히 전달하는 도구입니다.</q></div>
+</section>
+
+<!-- ══════════════ 9 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">9</span>문제가 생겼을 때</h2>
+  <table>
+    <tr><th style="width:56mm">증상</th><th>해결 방법</th></tr>
+    <tr><td>수어영상이 나오지 않고 그림 아바타가 나온다</td>
+        <td>그 기기의 브라우저가 mp4를 재생할 수 없는 경우입니다. 자동으로 그림 아바타와 수어 순서 표시로 바뀌어 흐름은 그대로 진행됩니다. Chrome 또는 Edge로 열어 보세요.</td></tr>
+    <tr><td>약봉투 이미지나 수어영상이 안 보인다</td>
+        <td><code>index.html</code>만 따로 옮기지 않았는지 확인해 주세요. 같은 폴더에 <code>avatar-samples</code>와 <code>samples</code>가 있어야 합니다. ZIP 안에서 바로 열었을 때도 같은 증상이 납니다.</td></tr>
+    <tr><td>카메라 켜기를 눌러도 카메라가 안 켜진다</td>
+        <td>브라우저 보안 정책 때문입니다(6장 참고). <span class="key">휴대기기 카메라로 촬영</span> 또는 <span class="key">사진 불러오기</span>를 사용해 주세요.</td></tr>
+    <tr><td>QR을 휴대전화로 찍어도 열리지 않는다</td>
+        <td>파일로 열었을 때는 정상입니다(5단계 참고). <span class="key">다시보기 화면 열어보기</span>로 같은 화면을 보여 주세요.</td></tr>
+    <tr><td><span class="key">수어영상 보기</span>가 눌리지 않는 것 같다</td>
+        <td>오른쪽 <strong>약봉투 내용과 위 문장을 확인했습니다</strong> 체크가 필요합니다. 안내창의 <span class="key">확인란으로 이동</span>을 누르면 그 자리로 이동합니다.</td></tr>
+    <tr><td>다음 단계로 넘어가지지 않는다</td>
+        <td>2단계에 빨간색 항목이 남아 있는지 확인해 주세요. 화면 아래 표시줄에 <strong>확인이 필요한 항목 n개</strong>로 개수가 나옵니다.</td></tr>
+    <tr><td>글씨가 너무 작거나 크다</td>
+        <td>브라우저에서 <span class="key">Ctrl</span> + <span class="key">+</span> / <span class="key">−</span> (Mac은 <span class="key">⌘</span>)로 조절하세요.</td></tr>
+    <tr><td>진행하던 내용이 사라졌다</td>
+        <td>브라우저를 닫으면 세션과 QR 정보가 사라집니다. 파일로 여는 데모의 특성입니다. 처음부터 다시 시작해 주세요.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════════ 10 ══════════════ -->
+<section class="page-break">
+  <h2><span class="no">10</span>꼭 함께 알려야 하는 한계</h2>
+  <p>시연에서 질문을 받으실 때 정확하게 답하실 수 있도록, 이 데모가 <strong>아직 하지 못하는 것</strong>을 정리했습니다.</p>
+
+  <div class="box bad">
+    <span class="t">반드시 함께 안내해 주세요</span>
+    <ol>
+      <li><strong>수어영상은 시연용 샘플입니다.</strong> 자막 내용과 일치하지 않습니다. 화면에도 그 안내가 표시됩니다. 실제 서비스에서는 승인된 문장에 맞는 수어가 생성됩니다.</li>
+      <li><strong>수어 표현 순서는 검수 전 초안입니다.</strong> 실제 운영에는 수어 전문가와 농인 자문단의 검수를 거친 문구만 사용합니다.</li>
+      <li><strong>OCR 정확도는 실제 약봉투로 검증되지 않았습니다.</strong> 화면의 정확도 수치는 시연용 예시값입니다.</li>
+      <li><strong>수어 안내만으로 법정 복약지도 의무가 대신되지 않습니다.</strong> 약사님의 복약지도를 정확히 전달하는 보조 도구입니다.</li>
+      <li><strong>병명을 짐작하거나 복용법을 스스로 만들지 않습니다.</strong> 약봉투에 적힌 내용과 약사님이 확인·추가한 내용만 전달합니다.</li>
+      <li><strong>기존 약국 시스템과 연동하지 않습니다.</strong> 약봉투를 촬영해서 읽는 방식이므로 조제 시스템을 건드리지 않습니다.</li>
+    </ol>
+  </div>
+
+  <h3>개인정보 처리</h3>
+  <table>
+    <tr><th style="width:52mm">항목</th><th>처리 방식</th></tr>
+    <tr><td>약봉투 사진</td><td>안내 중에만 사용하고 저장하지 않습니다.</td></tr>
+    <tr><td>방문자 개인정보</td><td>받지도, 저장하지도 않습니다.</td></tr>
+    <tr><td>QR 주소</td><td>이름이나 복약정보가 들어가지 않습니다.</td></tr>
+    <tr><td>안내 내용</td><td>48시간 동안만 보관하고 자동으로 지웁니다.</td></tr>
+  </table>
+
+  <div class="box" style="margin-top:8mm">
+    <span class="t">문의</span>
+    <p>케이엘큐브(KLcube) 전략기획실<br>이 문서와 데모는 대한약사회 소개를 위한 시연용 자료입니다.</p>
+  </div>
+</section>
+
+</body>
+</html>
