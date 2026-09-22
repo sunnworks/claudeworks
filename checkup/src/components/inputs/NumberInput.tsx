@@ -1,4 +1,5 @@
 import type { Answer, QuestionDefinition } from '../../domain/types';
+import { SignButton } from '../SignButton';
 
 interface Props {
   question: QuestionDefinition;
@@ -24,6 +25,7 @@ export function NumberInput({ question, answer, onChange }: Props) {
           <div className="field" key={field.key}>
             <label className="field__label" htmlFor={id}>
               {field.label}
+              <SignButton label={`${field.label} (단위 ${field.unit})`} className="sign-btn sign-btn--inline" />
             </label>
             <div className="field__row">
               <input

@@ -1,3 +1,6 @@
+import { useEffect } from 'react';
+import { SignButton } from '../components/SignButton';
+import { useSignVideo } from '../components/SignVideoContext';
 import type { EvaluationContext } from '../domain/rules';
 import { visibleQuestionsOfModule } from '../domain/questionnaireEngine';
 import type { ModuleDefinition, ScenarioDefinition } from '../domain/types';
@@ -12,7 +15,15 @@ interface Props {
 }
 
 /** S04 적용 모듈과 예상 문항 안내 */
+const CAPTION = '이번에 답할 문항을 안내합니다. 확인한 뒤 문진을 시작하세요.';
+
 export function ModulesScreen({ scenario, modules, context, proxyWriting, onStart, onBack }: Props) {
+  const { setPrimary } = useSignVideo();
+
+  useEffect(() => {
+    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-modules' });
+  }, [setPrimary]);
+
   const counts = modules.map((module) => ({
     module,
     count: visibleQuestionsOfModule(module.moduleId, context).length,
@@ -24,7 +35,10 @@ export function ModulesScreen({ scenario, modules, context, proxyWriting, onStar
   return (
     <div>
       <div className="card">
-        <h2>이번에 답할 문항</h2>
+        <h2>
+          이번에 답할 문항
+          <SignButton label={CAPTION} kind="안내" className="sign-btn sign-btn--inline" />
+        </h2>
         <p>
           {scenario.title} · {scenario.personLabel} · {proxyWriting ? '대리작성' : '본인작성'}
         </p>
@@ -71,6 +85,7 @@ export function ModulesScreen({ scenario, modules, context, proxyWriting, onStar
         <button type="button" className="btn btn--primary" onClick={onStart}>
           문진 시작
         </button>
+        <SignButton label="문진을 시작합니다" kind="버튼" className="sign-btn" />
       </div>
     </div>
   );

@@ -1,26 +1,25 @@
+import { useEffect } from 'react';
+import { SignButton } from '../components/SignButton';
+import { useSignVideo } from '../components/SignVideoContext';
 import { formatAnswer } from '../domain/answerFormat';
+import { buildFacilityChecklist } from '../domain/facilityChecklist';
 import { visibleQuestionsOfModule } from '../domain/questionnaireEngine';
 import type { EvaluationContext } from '../domain/rules';
 import type { AnyScore } from '../domain/scoring';
-import type { ModuleDefinition, ScenarioDefinition } from '../domain/types';
+import type { QuestionDefinition, ModuleDefinition, ScenarioDefinition } from '../domain/types';
 
 interface Props {
   scenario: ScenarioDefinition;
   proxyWriting: boolean;
-  preferredCommunication: string[];
   modules: ModuleDefinition[];
   context: EvaluationContext;
   scores: AnyScore[];
   safetyFlagged: boolean;
+  unknownQuestions: QuestionDefinition[];
   onRestart: () => void;
 }
 
-const COMMUNICATION_LABELS: Record<string, string> = {
-  KSL: '수어통역',
-  ORAL: '구화',
-  WRITING: '필담·문자',
-  DEVICE: '대화용 장치',
-};
+const CAPTION = '사전문진 확인표입니다. 제출되지 않았습니다. 인쇄해서 검진 당일 가져가세요.';
 
 function scoreLine(score: AnyScore): string {
   if (score.instrument === 'PHQ-9') return `총점 ${score.total} / ${score.maxTotal}`;
@@ -32,19 +31,28 @@ function scoreLine(score: AnyScore): string {
 export function SummaryScreen({
   scenario,
   proxyWriting,
-  preferredCommunication,
   modules,
   context,
   scores,
   safetyFlagged,
+  unknownQuestions,
   onRestart,
 }: Props) {
+  const { setPrimary } = useSignVideo();
   const needsReview = scores.filter((score) => score.medicalReview);
+  const facilityTasks = buildFacilityChecklist(context.answers);
+
+  useEffect(() => {
+    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-summary' });
+  }, [setPrimary]);
 
   return (
     <div>
       <div className="card">
-        <h2>사전문진 확인표 (데모)</h2>
+        <h2>
+          사전문진 확인표 (데모)
+          <SignButton label={CAPTION} kind="안내" className="sign-btn sign-btn--inline" />
+        </h2>
         <div className="notice notice--warn">
           <strong>제출되지 않았습니다</strong>
           이 확인표는 화면과 인쇄로만 제공됩니다. 병원이나 공단으로 전송되지 않았고, 저장되지도 않았습니다.
@@ -65,20 +73,62 @@ export function SummaryScreen({
               <td className="answer">{proxyWriting ? '보호자·조력인 대리작성' : '본인 작성'}</td>
             </tr>
             <tr>
-              <th scope="row">선호 의사소통 방법</th>
-              <td className="answer">
-                {preferredCommunication.length === 0
-                  ? '선택하지 않음'
-                  : preferredCommunication.map((value) => COMMUNICATION_LABELS[value] ?? value).join(', ')}
-              </td>
-            </tr>
-            <tr>
               <th scope="row">데모 확인코드</th>
               <td className="answer">DEMO-NOT-SUBMITTED</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <div className="card">
+        <h3>
+          검진기관 준비사항
+          <SignButton
+            label="검진기관이 미리 준비할 일을 정리했습니다."
+            kind="안내"
+            className="sign-btn sign-btn--inline"
+          />
+        </h3>
+        <p className="field__hint">
+          검진지원 문항의 답변을 검진기관이 방문 전에 준비할 일로 정리한 것입니다. 이 목록이 검진지원 문항을 묻는
+          이유입니다.
+        </p>
+        {facilityTasks.length === 0 ? (
+          <p>따로 요청한 지원이 없습니다.</p>
+        ) : (
+          <ul className="list">
+            {facilityTasks.map((task) => (
+              <li key={task.title}>
+                <strong>{task.title}</strong> — {task.detail}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {unknownQuestions.length > 0 && (
+        <div className="card">
+          <h3>
+            잘 모르겠다고 표시한 문항 {unknownQuestions.length}개
+            <SignButton
+              label="잘 모르겠다고 표시한 문항입니다. 검진 당일 의료진과 함께 확인하세요."
+              kind="안내"
+              className="sign-btn sign-btn--inline"
+            />
+          </h3>
+          <div className="notice notice--warn">
+            <strong>값을 저장하지 않았습니다</strong>
+            공식 응답에 모름이 없는 문항이라 임의로 값을 만들지 않았습니다. 검진 당일 의료진과 함께 확인하세요.
+          </div>
+          <ul className="list">
+            {unknownQuestions.map((question) => (
+              <li key={question.questionId}>
+                [{question.questionId}] {question.officialText}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {scores.length > 0 && (
         <div className="card">
@@ -158,6 +208,7 @@ export function SummaryScreen({
         <button type="button" className="btn btn--primary" onClick={onRestart}>
           새로 시작
         </button>
+        <SignButton label="처음부터 다시 시작합니다" kind="버튼" className="sign-btn" />
       </div>
     </div>
   );

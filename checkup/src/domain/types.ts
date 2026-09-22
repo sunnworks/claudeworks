@@ -147,6 +147,8 @@ export interface ModuleDefinition {
   questions: QuestionDefinition[];
   /** 검증형 척도 안내 문구 */
   instrumentNotice?: string;
+  /** 이 모듈을 왜 묻는지에 대한 안내. 공식 문진표가 아닌 확장 문항이면 근거를 함께 적는다. */
+  purposeNotice?: string;
 }
 
 export interface QuestionnaireDefinition {

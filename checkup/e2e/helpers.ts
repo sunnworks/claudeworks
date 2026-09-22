@@ -73,13 +73,13 @@ export async function completeQuestionnaire(page: Page, maxSteps = 250): Promise
   for (; steps < maxSteps; steps += 1) {
     if (await page.getByRole('heading', { name: '답변을 확인해 주세요' }).isVisible().catch(() => false)) break;
 
-    const continueButton = page.getByRole('button', { name: '다음 모듈 시작' });
+    const continueButton = page.getByRole('button', { name: '다음 모듈 시작', exact: true });
     if (await continueButton.isVisible().catch(() => false)) {
       await continueButton.click();
       continue;
     }
 
-    const safety = page.getByRole('button', { name: '안내를 확인했습니다' });
+    const safety = page.getByRole('button', { name: '안내를 확인했습니다', exact: true });
     if (await safety.isVisible().catch(() => false)) {
       await safety.click();
       continue;

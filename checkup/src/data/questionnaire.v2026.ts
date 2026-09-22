@@ -23,6 +23,8 @@ export const MODULES: ModuleDefinition[] = [
     description: '병원에서 필요한 동행·의사소통 지원을 미리 알려 줍니다.',
     eligibility: { type: 'always' },
     questions: SUPPORT_QUESTIONS,
+    purposeNotice:
+      '이 문항은 국가건강검진 공식 문진표가 아닙니다. 장애친화 건강검진 사전 체크리스트를 참고한 확장 문항으로, 검진기관이 방문 전에 수어통역·동행 허용·보조인력 배치를 준비하도록 돕는 데에만 사용합니다. 답변은 확인표의 검진기관 준비사항으로 정리됩니다.',
   },
   {
     moduleId: 'GENERAL',

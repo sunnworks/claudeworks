@@ -1,13 +1,13 @@
 import type { Answer, QuestionDefinition } from '../../domain/types';
+import { SignButton } from '../SignButton';
 
 interface Props {
   question: QuestionDefinition;
   answer: Answer | undefined;
   onChange: (answer: Answer | undefined) => void;
-  onPlayOptionVideo: (label: string) => void;
 }
 
-export function SingleChoiceInput({ question, answer, onChange, onPlayOptionVideo }: Props) {
+export function SingleChoiceInput({ question, answer, onChange }: Props) {
   const current = answer && answer.kind === 'choice' ? answer : undefined;
 
   return (
@@ -17,6 +17,7 @@ export function SingleChoiceInput({ question, answer, onChange, onPlayOptionVide
         const inputId = `${question.questionId}-${option.value}`;
         return (
           <div key={option.value}>
+            <div className="option-row">
             <label className={`option${selected ? ' option--selected' : ''}`} htmlFor={inputId}>
               <input
                 id={inputId}
@@ -35,18 +36,9 @@ export function SingleChoiceInput({ question, answer, onChange, onPlayOptionVide
                 )}
                 {option.hint && <span className="option__hint">{option.hint}</span>}
               </span>
-              <button
-                type="button"
-                className="option-video-btn"
-                onClick={(event) => {
-                  event.preventDefault();
-                  onPlayOptionVideo(option.label);
-                }}
-                aria-label={`${option.label} 선택지 수어영상 보기`}
-              >
-                수어 보기
-              </button>
             </label>
+            <SignButton label={option.label} className="sign-btn" />
+            </div>
 
             {selected && option.numberField && (
               <div className="option__sub">

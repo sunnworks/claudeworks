@@ -1,4 +1,5 @@
 import type { Answer, QuestionDefinition } from '../../domain/types';
+import { SignButton } from '../SignButton';
 
 interface Props {
   question: QuestionDefinition;
@@ -15,8 +16,14 @@ export function ScaleInput({ question, answer, onChange }: Props) {
   return (
     <div>
       <div className="field__row" style={{ justifyContent: 'space-between' }}>
-        <span className="field__hint">{scale.minLabel}</span>
-        <span className="field__hint">{scale.maxLabel}</span>
+        <span className="field__hint">
+          {scale.minLabel}
+          <SignButton label={scale.minLabel} className="sign-btn sign-btn--inline" />
+        </span>
+        <span className="field__hint">
+          {scale.maxLabel}
+          <SignButton label={scale.maxLabel} className="sign-btn sign-btn--inline" />
+        </span>
       </div>
       <div className="matrix__choices" role="radiogroup" aria-label={question.officialText}>
         {steps.map((step) => (

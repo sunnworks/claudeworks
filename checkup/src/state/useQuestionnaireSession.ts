@@ -6,6 +6,7 @@ import {
   findIncompleteQuestions,
   findModule,
   findQuestion,
+  findUnknownQuestions,
   neighbourQuestionId,
   pruneOrphanAnswers,
   selectModules,
@@ -13,6 +14,7 @@ import {
 } from '../domain/questionnaireEngine';
 import { isSelfHarmResponse, scoreInstruments } from '../domain/scoring';
 import { validateAnswer } from '../domain/validation';
+import type { UnknownFlags } from '../domain/unknown';
 import type { Answer, AnswerMap, ScenarioDefinition, SessionContext } from '../domain/types';
 
 export type ScreenId =
@@ -38,8 +40,10 @@ export function useQuestionnaireSession() {
   const [screen, setScreen] = useState<ScreenId>('intro');
   const [scenario, setScenario] = useState<ScenarioDefinition | undefined>();
   const [proxyWriting, setProxyWriting] = useState(false);
-  const [preferredCommunication, setPreferredCommunication] = useState<string[]>([]);
   const [answers, setAnswers] = useState<AnswerMap>({});
+  // 공식 응답에 '모름'이 없는 문항에서 사용자가 모르겠다고 표시한 목록.
+  // 값을 만들어 저장하지 않고 의료진 확인 요청 상태로만 남긴다.
+  const [unknownFlags, setUnknownFlags] = useState<UnknownFlags>({});
   const [currentQuestionId, setCurrentQuestionId] = useState<string | undefined>();
   const [completedModuleId, setCompletedModuleId] = useState<string | undefined>();
   const [removalNotice, setRemovalNotice] = useState<RemovalNotice | undefined>();
@@ -48,8 +52,8 @@ export function useQuestionnaireSession() {
   const [showIncomplete, setShowIncomplete] = useState(false);
 
   const session: SessionContext | undefined = useMemo(
-    () => (scenario ? { scenario, proxyWriting, preferredCommunication } : undefined),
-    [scenario, proxyWriting, preferredCommunication],
+    () => (scenario ? { scenario, proxyWriting, preferredCommunication: [] } : undefined),
+    [scenario, proxyWriting],
   );
 
   const context = useMemo(
@@ -60,10 +64,17 @@ export function useQuestionnaireSession() {
   const modules = useMemo(() => (session ? selectModules(session) : []), [session]);
   const questions = useMemo(() => (context ? visibleQuestions(context) : []), [context]);
   const progress = useMemo(
-    () => (context ? computeProgress(context) : { requiredTotal: 0, requiredAnswered: 0, percent: 0 }),
-    [context],
+    () => (context ? computeProgress(context, unknownFlags) : { requiredTotal: 0, requiredAnswered: 0, percent: 0 }),
+    [context, unknownFlags],
   );
-  const incomplete = useMemo(() => (context ? findIncompleteQuestions(context) : []), [context]);
+  const incomplete = useMemo(
+    () => (context ? findIncompleteQuestions(context, unknownFlags) : []),
+    [context, unknownFlags],
+  );
+  const unknownQuestions = useMemo(
+    () => (context ? findUnknownQuestions(context, unknownFlags) : []),
+    [context, unknownFlags],
+  );
   const scores = useMemo(
     () => scoreInstruments(answers, modules.map((module) => module.moduleId)),
     [answers, modules],
@@ -74,8 +85,8 @@ export function useQuestionnaireSession() {
   const startScenario = useCallback((next: ScenarioDefinition) => {
     setScenario(next);
     setProxyWriting(next.defaultProxyWriting);
-    setPreferredCommunication([]);
     setAnswers({});
+    setUnknownFlags({});
     setCurrentQuestionId(undefined);
     setSafetyFlagged(false);
     setSafetyOpen(false);
@@ -100,6 +111,19 @@ export function useQuestionnaireSession() {
         if (answer === undefined) delete draft[questionId];
         else draft[questionId] = answer;
       }
+
+      // 답을 고르면 모름 표시는 해제한다.
+      setUnknownFlags((previous) => {
+        const next = { ...previous };
+        let changed = false;
+        for (const [questionId] of changes) {
+          if (next[questionId]) {
+            delete next[questionId];
+            changed = true;
+          }
+        }
+        return changed ? next : previous;
+      });
 
       const pruned = pruneOrphanAnswers(session, draft);
       setAnswers(pruned.answers);
@@ -138,6 +162,26 @@ export function useQuestionnaireSession() {
       applyAnswers(targets);
     },
     [applyAnswers, context],
+  );
+
+  /** 공식 응답에 모름이 없는 문항에서 '잘 모르겠어요'를 표시한다. 값은 저장하지 않는다. */
+  const toggleUnknown = useCallback(
+    (questionId: string) => {
+      setUnknownFlags((previous) => {
+        const next = { ...previous };
+        if (next[questionId]) delete next[questionId];
+        else next[questionId] = true;
+        return next;
+      });
+      // 모름으로 표시하면 기존 답변은 지운다.
+      setAnswers((previous) => {
+        if (!previous[questionId]) return previous;
+        const next = { ...previous };
+        delete next[questionId];
+        return next;
+      });
+    },
+    [],
   );
 
   const dismissRemovalNotice = useCallback(() => setRemovalNotice(undefined), []);
@@ -190,6 +234,7 @@ export function useQuestionnaireSession() {
     setCurrentQuestionId(undefined);
     setCompletedModuleId(undefined);
     setRemovalNotice(undefined);
+    setUnknownFlags({});
     setSafetyFlagged(false);
     setSafetyOpen(false);
     setShowIncomplete(false);
@@ -215,8 +260,6 @@ export function useQuestionnaireSession() {
     session,
     proxyWriting,
     setProxyWriting,
-    preferredCommunication,
-    setPreferredCommunication,
     startScenario,
     beginQuestions,
     restart,
@@ -229,6 +272,9 @@ export function useQuestionnaireSession() {
     setAnswer,
     setBulkNone,
     answers,
+    unknownFlags,
+    toggleUnknown,
+    unknownQuestions,
     answerStatus,
     goNext,
     goPrev,

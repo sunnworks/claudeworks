@@ -1,12 +1,17 @@
+import { useEffect } from 'react';
+import { SignButton } from '../components/SignButton';
+import { useSignVideo } from '../components/SignVideoContext';
 import { formatAnswer } from '../domain/answerFormat';
 import { visibleQuestionsOfModule } from '../domain/questionnaireEngine';
 import type { EvaluationContext } from '../domain/rules';
 import { validateAnswer } from '../domain/validation';
+import type { UnknownFlags } from '../domain/unknown';
 import type { ModuleDefinition } from '../domain/types';
 
 interface Props {
   modules: ModuleDefinition[];
   context: EvaluationContext;
+  unknownFlags: UnknownFlags;
   incompleteCount: number;
   showIncomplete: boolean;
   onJump: (questionId: string) => void;
@@ -15,19 +20,31 @@ interface Props {
 }
 
 /** S09 전체 답변 검토와 수정 */
+const CAPTION = '지금까지 답한 내용을 확인하세요. 고치고 싶은 문항은 수정을 누르세요.';
+
 export function ReviewScreen({
   modules,
   context,
+  unknownFlags,
   incompleteCount,
   showIncomplete,
   onJump,
   onFinish,
   onBack,
 }: Props) {
+  const { setPrimary } = useSignVideo();
+
+  useEffect(() => {
+    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-review' });
+  }, [setPrimary]);
+
   return (
     <div>
       <div className="card">
-        <h2>답변을 확인해 주세요</h2>
+        <h2>
+          답변을 확인해 주세요
+          <SignButton label={CAPTION} kind="안내" className="sign-btn sign-btn--inline" />
+        </h2>
         <p>모듈 이름을 누르면 답변이 펼쳐집니다. 수정할 문항은 오른쪽 “수정”을 누르세요.</p>
 
         {incompleteCount > 0 ? (
@@ -46,7 +63,9 @@ export function ReviewScreen({
       {modules.map((module) => {
         const questions = visibleQuestionsOfModule(module.moduleId, context);
         const missing = questions.filter(
-          (question) => !validateAnswer(question, context.answers[question.questionId], context).complete,
+          (question) =>
+            unknownFlags[question.questionId] !== true &&
+            !validateAnswer(question, context.answers[question.questionId], context).complete,
         ).length;
 
         return (
@@ -70,14 +89,19 @@ export function ReviewScreen({
                   {questions.map((question) => {
                     const answer = context.answers[question.questionId];
                     const result = validateAnswer(question, answer, context);
+                    const isUnknown = unknownFlags[question.questionId] === true;
                     return (
                       <tr key={question.questionId}>
                         <th scope="row">
                           {question.officialText}
                           <span className="option__hint">{question.questionId}</span>
                         </th>
-                        <td className={result.complete ? 'answer' : 'missing'}>
-                          {result.complete ? formatAnswer(question, answer) : '확인 필요'}
+                        <td className={isUnknown ? 'unknown' : result.complete ? 'answer' : 'missing'}>
+                          {isUnknown
+                            ? '잘 모르겠음 · 의료진 확인 요청'
+                            : result.complete
+                              ? formatAnswer(question, answer)
+                              : '확인 필요'}
                         </td>
                         <td>
                           <button type="button" className="review-row-btn" onClick={() => onJump(question.questionId)}>
@@ -107,6 +131,7 @@ export function ReviewScreen({
         <button type="button" className="btn btn--primary" onClick={onFinish} disabled={incompleteCount > 0}>
           작성 완료
         </button>
+        <SignButton label="작성을 완료합니다" kind="버튼" className="sign-btn" />
       </div>
     </div>
   );

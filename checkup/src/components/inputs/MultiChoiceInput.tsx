@@ -1,13 +1,13 @@
 import type { Answer, QuestionDefinition } from '../../domain/types';
+import { SignButton } from '../SignButton';
 
 interface Props {
   question: QuestionDefinition;
   answer: Answer | undefined;
   onChange: (answer: Answer | undefined) => void;
-  onPlayOptionVideo: (label: string) => void;
 }
 
-export function MultiChoiceInput({ question, answer, onChange, onPlayOptionVideo }: Props) {
+export function MultiChoiceInput({ question, answer, onChange }: Props) {
   const values = answer && answer.kind === 'choices' ? answer.values : [];
 
   const toggle = (value: string, exclusive: boolean) => {
@@ -27,7 +27,8 @@ export function MultiChoiceInput({ question, answer, onChange, onPlayOptionVideo
         const selected = values.includes(option.value);
         const inputId = `${question.questionId}-${option.value}`;
         return (
-          <label key={option.value} className={`option${selected ? ' option--selected' : ''}`} htmlFor={inputId}>
+          <div key={option.value} className="option-row">
+          <label className={`option${selected ? ' option--selected' : ''}`} htmlFor={inputId}>
             <input
               id={inputId}
               type="checkbox"
@@ -43,18 +44,9 @@ export function MultiChoiceInput({ question, answer, onChange, onPlayOptionVideo
               )}
               {option.hint && <span className="option__hint">{option.hint}</span>}
             </span>
-            <button
-              type="button"
-              className="option-video-btn"
-              onClick={(event) => {
-                event.preventDefault();
-                onPlayOptionVideo(option.label);
-              }}
-              aria-label={`${option.label} 선택지 수어영상 보기`}
-            >
-              수어 보기
-            </button>
           </label>
+          <SignButton label={option.label} className="sign-btn" />
+          </div>
         );
       })}
     </div>

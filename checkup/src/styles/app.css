@@ -28,8 +28,66 @@
   --maxw: 1180px;
 }
 
+/* 고대비 모드: 검은 배경 + 흰 글씨 + 노란 강조. 테두리를 굵게 해 색 외에도 구분된다. */
+html[data-contrast='high'] {
+  --bg: #000000;
+  --surface: #000000;
+  --surface-muted: #1c1c1c;
+  --border: #ffffff;
+  --border-strong: #ffffff;
+  --text: #ffffff;
+  --text-muted: #f0f0f0;
+  --primary: #ffe600;
+  --primary-dark: #ffe600;
+  --primary-soft: #2e2a00;
+  --danger: #ff8a8a;
+  --danger-soft: #330000;
+  --warn: #ffd24a;
+  --warn-soft: #332600;
+  --ok: #7ee2a8;
+  --ok-soft: #00331a;
+  --focus: #00e5ff;
+  --shadow: none;
+}
+html[data-contrast='high'] .btn--primary,
+html[data-contrast='high'] .pill--selected,
+html[data-contrast='high'] .btn--danger {
+  color: #000000;
+  font-weight: 800;
+}
+html[data-contrast='high'] .btn--danger {
+  background: var(--danger);
+}
+html[data-contrast='high'] .card,
+html[data-contrast='high'] .option,
+html[data-contrast='high'] .matrix__row,
+html[data-contrast='high'] .sign-panel {
+  border-width: 2px;
+}
+html[data-contrast='high'] .notice {
+  border-width: 2px;
+}
+html[data-contrast='high'] .question-easy {
+  border-left-color: var(--primary);
+}
+html[data-contrast='high'] .demo-badge,
+html[data-contrast='high'] .chip {
+  border-width: 2px;
+}
+
 * {
   box-sizing: border-box;
+}
+
+/* 저시력 사용자를 위한 글자 크기 단계. rem 기준이라 화면 전체가 함께 커진다. */
+html {
+  font-size: 16px;
+}
+html[data-font='large'] {
+  font-size: 19px;
+}
+html[data-font='xlarge'] {
+  font-size: 22px;
 }
 
 html,
@@ -38,7 +96,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.6;
   font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
   -webkit-text-size-adjust: 100%;
@@ -272,20 +330,20 @@ video {
 }
 
 /* ---------- 문항 레이아웃 ---------- */
-.question-layout {
+.app__layout {
   display: grid;
   gap: 16px;
   grid-template-columns: 1fr;
 }
 /* 모바일은 영상 다음에 질문이 오도록 세로 배치, 넓은 화면은 좌우 배치 */
-@media (min-width: 900px) {
-  .question-layout {
-    grid-template-columns: minmax(360px, 42%) 1fr;
+@media (min-width: 960px) {
+  .app__layout {
+    grid-template-columns: minmax(380px, 44%) 1fr;
     align-items: start;
   }
-  .question-layout__video {
+  .app__layout__video {
     position: sticky;
-    top: 92px;
+    top: 108px;
   }
 }
 
@@ -296,9 +354,18 @@ video {
   box-shadow: var(--shadow);
   padding: 14px;
 }
+.sign-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+/* 영역 크기를 고정해 문항이 바뀌어도 화면이 흔들리지 않는다. */
 .sign-panel__frame {
   position: relative;
-  background: #101a30;
+  background: #0d1526;
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   aspect-ratio: 16 / 9;
@@ -306,12 +373,19 @@ video {
   align-items: center;
   justify-content: center;
 }
+/* 크게 보기: 4:3 영역에 맞춰 확대한다. 원본의 좌우 검은 여백만 잘리고 수어 동작은 그대로 보인다. */
+.sign-panel__frame--zoom {
+  aspect-ratio: 4 / 3;
+}
 .sign-panel__frame video {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #101a30;
+  background: #0d1526;
   display: block;
+}
+.sign-panel__frame--zoom video {
+  object-fit: cover;
 }
 .sign-panel__fallback {
   color: #fff;
@@ -341,13 +415,19 @@ video {
   margin-bottom: 10px;
 }
 .sign-panel__controls {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 10px;
 }
+@media (min-width: 480px) {
+  .sign-panel__controls {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 .sign-panel__controls .btn {
-  flex: 1 1 auto;
+  width: 100%;
+  padding: 8px 6px;
 }
 
 /* ---------- 문항 본문 ---------- */
@@ -736,6 +816,62 @@ textarea {
   color: var(--text-muted);
 }
 
+.sign-btn {
+  flex: 0 0 auto;
+  min-height: 44px;
+  min-width: 56px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--primary);
+  background: var(--surface);
+  color: var(--primary-dark);
+  font-size: 0.875rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sign-btn::before {
+  content: '▶ ';
+}
+.sign-btn:hover {
+  background: var(--primary-soft);
+}
+.sign-btn--inline {
+  margin-left: 8px;
+}
+
+.a11y-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.a11y-bar__label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.a11y-bar button {
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.a11y-bar button[aria-pressed='true'] {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+html[data-contrast='high'] .a11y-bar button[aria-pressed='true'] {
+  color: #000;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -772,4 +908,142 @@ textarea {
     border: 1px solid #999;
     break-inside: avoid;
   }
+}
+
+/* ---------- 수어 버튼 배치 ---------- */
+.option .sign-btn {
+  margin-left: auto;
+  align-self: center;
+}
+.matrix__row-label .sign-btn {
+  flex: 0 0 auto;
+}
+.pill-with-sign {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+.pill-with-sign .sign-btn {
+  min-width: 48px;
+  padding: 6px 8px;
+  font-size: 0.8125rem;
+}
+.scenario-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+.scenario-card-wrap .sign-btn {
+  align-self: flex-start;
+}
+h2 .sign-btn,
+h3 .sign-btn,
+strong .sign-btn,
+.field__label .sign-btn,
+.field__hint .sign-btn {
+  vertical-align: middle;
+  font-size: 0.8125rem;
+  min-height: 36px;
+  min-width: 48px;
+  padding: 4px 10px;
+}
+
+/* ---------- 모름 표시 ---------- */
+.unknown-box {
+  border: 2px dashed var(--border-strong);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: var(--surface-muted);
+}
+.unknown-box--on {
+  border-style: solid;
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+.unknown-box__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.summary-table td.unknown {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+/* ---------- 머리말 배치 ---------- */
+.topbar__inner {
+  row-gap: 8px;
+}
+@media (max-width: 720px) {
+  .topbar__title {
+    font-size: 0.9375rem;
+    flex: 1 1 100%;
+  }
+  .a11y-bar {
+    flex: 1 1 100%;
+  }
+}
+
+/* 선택지와 수어 버튼을 나란히 둔다. 수어 버튼은 label 밖에 있어야 라디오의 이름을 오염시키지 않는다. */
+.option-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.option-row .option {
+  flex: 1 1 auto;
+}
+.option-row .sign-btn {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+/* 고대비 모드에서 안내 상자의 글자색이 배경과 겹치지 않도록 따로 지정한다. */
+html[data-contrast='high'] .notice--info {
+  background: #001624;
+  color: #ffffff;
+  border-color: #66d9ff;
+}
+html[data-contrast='high'] .notice--warn {
+  background: #1f1600;
+  color: #ffd24a;
+  border-color: #ffd24a;
+}
+html[data-contrast='high'] .notice--danger {
+  background: #200000;
+  color: #ff9a9a;
+  border-color: #ff9a9a;
+}
+html[data-contrast='high'] .notice--ok {
+  background: #00200f;
+  color: #8ce9b6;
+  border-color: #8ce9b6;
+}
+html[data-contrast='high'] .notice strong {
+  color: inherit;
+}
+
+.sign-panel__settings {
+  margin-top: 8px;
+}
+.sign-panel__settings > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.sign-panel__settings[open] > summary {
+  margin-bottom: 8px;
 }

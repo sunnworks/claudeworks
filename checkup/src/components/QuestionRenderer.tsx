@@ -13,30 +13,15 @@ interface Props {
   answer: Answer | undefined;
   context: EvaluationContext;
   onChange: (answer: Answer | undefined) => void;
-  onPlayOptionVideo: (label: string) => void;
 }
 
-/** 문항 유형에 따라 입력 컴포넌트를 고른다. */
-export function QuestionRenderer({ question, answer, context, onChange, onPlayOptionVideo }: Props) {
+/** 문항 유형에 따라 입력 컴포넌트를 고른다. 선택지 수어영상은 각 입력이 직접 제공한다. */
+export function QuestionRenderer({ question, answer, context, onChange }: Props) {
   switch (question.type) {
     case 'single_choice':
-      return (
-        <SingleChoiceInput
-          question={question}
-          answer={answer}
-          onChange={onChange}
-          onPlayOptionVideo={onPlayOptionVideo}
-        />
-      );
+      return <SingleChoiceInput question={question} answer={answer} onChange={onChange} />;
     case 'multi_choice':
-      return (
-        <MultiChoiceInput
-          question={question}
-          answer={answer}
-          onChange={onChange}
-          onPlayOptionVideo={onPlayOptionVideo}
-        />
-      );
+      return <MultiChoiceInput question={question} answer={answer} onChange={onChange} />;
     case 'number':
       return <NumberInput question={question} answer={answer} onChange={onChange} />;
     case 'duration':
@@ -46,14 +31,6 @@ export function QuestionRenderer({ question, answer, context, onChange, onPlayOp
     case 'scale':
       return <ScaleInput question={question} answer={answer} onChange={onChange} />;
     case 'matrix':
-      return (
-        <MatrixInput
-          question={question}
-          answer={answer}
-          context={context}
-          onChange={onChange}
-          onPlayOptionVideo={onPlayOptionVideo}
-        />
-      );
+      return <MatrixInput question={question} answer={answer} context={context} onChange={onChange} />;
   }
 }

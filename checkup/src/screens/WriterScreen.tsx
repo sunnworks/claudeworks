@@ -1,49 +1,43 @@
+import { useEffect } from 'react';
+import { SignButton } from '../components/SignButton';
+import { useSignVideo } from '../components/SignVideoContext';
 import type { ScenarioDefinition } from '../domain/types';
-
-const COMMUNICATION_OPTIONS = [
-  { value: 'KSL', label: '수어통역' },
-  { value: 'ORAL', label: '구화' },
-  { value: 'WRITING', label: '필담·문자' },
-  { value: 'DEVICE', label: '대화용 장치' },
-];
 
 interface Props {
   scenario: ScenarioDefinition;
   proxyWriting: boolean;
   onProxyChange: (value: boolean) => void;
-  preferredCommunication: string[];
-  onCommunicationChange: (values: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-/** S03 작성자와 지원 설정. 대리작성 사실은 확인표에 그대로 표시된다. */
-export function WriterScreen({
-  scenario,
-  proxyWriting,
-  onProxyChange,
-  preferredCommunication,
-  onCommunicationChange,
-  onNext,
-  onBack,
-}: Props) {
-  const toggle = (value: string) => {
-    onCommunicationChange(
-      preferredCommunication.includes(value)
-        ? preferredCommunication.filter((item) => item !== value)
-        : [...preferredCommunication, value],
-    );
-  };
+const CAPTION = '이 문진표를 누가 작성하는지 고르세요. 본인 작성인가요, 대리 작성인가요?';
+
+/**
+ * S03 작성자 설정.
+ * 대리작성 사실은 확인표에 그대로 표시된다(설계서 6 역할과 권한).
+ * 선호 의사소통 방법은 문진 안의 SUP-06 에서 수어영상과 함께 묻는다. 여기서 중복해 묻지 않는다.
+ */
+export function WriterScreen({ scenario, proxyWriting, onProxyChange, onNext, onBack }: Props) {
+  const { setPrimary } = useSignVideo();
+
+  useEffect(() => {
+    setPrimary({ caption: CAPTION, kind: '문항', key: 'screen-writer' });
+  }, [setPrimary]);
 
   return (
     <div>
       <div className="card">
-        <h2>누가 작성하나요?</h2>
+        <h2>
+          누가 작성하나요?
+          <SignButton label={CAPTION} kind="문항" className="sign-btn sign-btn--inline" />
+        </h2>
         <p className="field__hint">
           선택한 시나리오: {scenario.title} · {scenario.personLabel}
         </p>
 
         <div className="options" role="radiogroup" aria-label="작성자">
+          <div className="option-row">
           <label className={`option${!proxyWriting ? ' option--selected' : ''}`} htmlFor="writer-self">
             <input
               id="writer-self"
@@ -57,6 +51,9 @@ export function WriterScreen({
               {!proxyWriting && <span className="option__mark" aria-hidden="true">✔ 선택함</span>}
             </span>
           </label>
+          <SignButton label="본인이 작성합니다" className="sign-btn" />
+          </div>
+          <div className="option-row">
           <label className={`option${proxyWriting ? ' option--selected' : ''}`} htmlFor="writer-proxy">
             <input
               id="writer-proxy"
@@ -71,25 +68,24 @@ export function WriterScreen({
               {proxyWriting && <span className="option__mark" aria-hidden="true">✔ 선택함</span>}
             </span>
           </label>
+          <SignButton
+            label="보호자나 조력인이 대리로 작성합니다. 대리작성 사실은 확인표에 표시됩니다."
+            className="sign-btn"
+          />
+          </div>
         </div>
 
-        <h3>병원에서 편한 의사소통 방법 (여러 개 선택 가능)</h3>
-        <p className="field__hint">검진기관이 방문 전에 통역과 안내를 준비하는 데 사용합니다.</p>
-        <div className="matrix__choices">
-          {COMMUNICATION_OPTIONS.map((option) => {
-            const selected = preferredCommunication.includes(option.value);
-            return (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={selected}
-                className={`pill${selected ? ' pill--selected' : ''}`}
-                onClick={() => toggle(option.value)}
-              >
-                {selected ? `✔ ${option.label}` : option.label}
-              </button>
-            );
-          })}
+        <div className="notice notice--info">
+          <strong>
+            의사소통 방법은 문진에서 묻습니다
+            <SignButton
+              label="병원에서 편한 의사소통 방법은 문진 문항에서 수어영상과 함께 묻습니다."
+              kind="안내"
+              className="sign-btn sign-btn--inline"
+            />
+          </strong>
+          수어통역·구화·필담 같은 선호 의사소통 방법은 검진지원 문항(SUP-05, SUP-06)에서 수어영상과 함께
+          묻습니다. 그 답변은 확인표의 검진기관 준비사항으로 정리됩니다.
         </div>
       </div>
 
@@ -100,6 +96,7 @@ export function WriterScreen({
         <button type="button" className="btn btn--primary" onClick={onNext}>
           다음
         </button>
+        <SignButton label="다음으로 갑니다" kind="버튼" className="sign-btn" />
       </div>
     </div>
   );

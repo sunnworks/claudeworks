@@ -1,6 +1,7 @@
 import { QUESTIONNAIRE } from '../data/questionnaire.v2026';
 import { evaluateRule, visibleMatrixRows, type EvaluationContext } from './rules';
 import { validateAnswer } from './validation';
+import type { UnknownFlags } from './unknown';
 import type {
   AnswerMap,
   ModuleDefinition,
@@ -96,14 +97,20 @@ export function pruneOrphanAnswers(
   return { answers: current, removedQuestionIds: [...removed] };
 }
 
-/** 진행률은 고정 문항수가 아니라 현재 분기의 필수문항 수로 계산한다. */
+/**
+ * 진행률은 고정 문항수가 아니라 현재 분기의 필수문항 수로 계산한다.
+ * '모름'으로 표시한 문항은 사용자가 판단을 끝낸 문항이므로 처리된 것으로 센다.
+ */
 export function computeProgress(
   context: EvaluationContext,
+  unknownFlags: UnknownFlags = {},
   definition: QuestionnaireDefinition = QUESTIONNAIRE,
 ): ProgressInfo {
   const questions = visibleQuestions(context, definition).filter((question) => question.required);
   const answered = questions.filter(
-    (question) => validateAnswer(question, context.answers[question.questionId], context).complete,
+    (question) =>
+      unknownFlags[question.questionId] === true ||
+      validateAnswer(question, context.answers[question.questionId], context).complete,
   ).length;
   const total = questions.length;
   return {
@@ -113,14 +120,29 @@ export function computeProgress(
   };
 }
 
-/** 완료 전 재검증. 누락·범위 오류 문항 ID를 돌려준다. */
+/**
+ * 완료 전 재검증. 답도 없고 모름 표시도 없는 문항을 돌려준다.
+ * 모름으로 표시한 문항은 값 없이 '의료진 확인 요청'으로 남고 완료를 막지 않는다.
+ */
 export function findIncompleteQuestions(
   context: EvaluationContext,
+  unknownFlags: UnknownFlags = {},
   definition: QuestionnaireDefinition = QUESTIONNAIRE,
 ): QuestionDefinition[] {
   return visibleQuestions(context, definition).filter(
-    (question) => !validateAnswer(question, context.answers[question.questionId], context).complete,
+    (question) =>
+      unknownFlags[question.questionId] !== true &&
+      !validateAnswer(question, context.answers[question.questionId], context).complete,
   );
+}
+
+/** 모름으로 표시해 의료진 확인이 필요한 문항 */
+export function findUnknownQuestions(
+  context: EvaluationContext,
+  unknownFlags: UnknownFlags,
+  definition: QuestionnaireDefinition = QUESTIONNAIRE,
+): QuestionDefinition[] {
+  return visibleQuestions(context, definition).filter((question) => unknownFlags[question.questionId] === true);
 }
 
 export function findQuestion(

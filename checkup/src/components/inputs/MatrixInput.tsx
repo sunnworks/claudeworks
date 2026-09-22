@@ -1,15 +1,15 @@
 import { visibleMatrixRows, type EvaluationContext } from '../../domain/rules';
 import type { Answer, MatrixCell, QuestionDefinition } from '../../domain/types';
+import { SignButton } from '../SignButton';
 
 interface Props {
   question: QuestionDefinition;
   answer: Answer | undefined;
   context: EvaluationContext;
   onChange: (answer: Answer | undefined) => void;
-  onPlayOptionVideo: (label: string) => void;
 }
 
-export function MatrixInput({ question, answer, context, onChange, onPlayOptionVideo }: Props) {
+export function MatrixInput({ question, answer, context, onChange }: Props) {
   const matrix = question.matrix;
   if (!matrix) return null;
 
@@ -34,15 +34,17 @@ export function MatrixInput({ question, answer, context, onChange, onPlayOptionV
       {matrix.exclusiveOptions && (
         <div className="matrix__choices" style={{ marginBottom: 12 }}>
           {matrix.exclusiveOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={current.exclusive === option.value}
-              className={`pill${current.exclusive === option.value ? ' pill--selected' : ''}`}
-              onClick={() => chooseExclusive(option.value)}
-            >
-              {current.exclusive === option.value ? `✔ ${option.label}` : option.label}
-            </button>
+            <span key={option.value} className="pill-with-sign">
+              <button
+                type="button"
+                aria-pressed={current.exclusive === option.value}
+                className={`pill${current.exclusive === option.value ? ' pill--selected' : ''}`}
+                onClick={() => chooseExclusive(option.value)}
+              >
+                {current.exclusive === option.value ? `✔ ${option.label}` : option.label}
+              </button>
+              <SignButton label={option.label} className="sign-btn" />
+            </span>
           ))}
         </div>
       )}
@@ -59,14 +61,7 @@ export function MatrixInput({ question, answer, context, onChange, onPlayOptionV
               <div key={row.key} className={`matrix__row${answered ? ' matrix__row--answered' : ''}`}>
                 <div className="matrix__row-label">
                   <span id={`${question.questionId}-${row.key}-label`}>{row.label}</span>
-                  <button
-                    type="button"
-                    className="option-video-btn"
-                    onClick={() => onPlayOptionVideo(row.label)}
-                    aria-label={`${row.label} 수어영상 보기`}
-                  >
-                    수어 보기
-                  </button>
+                  <SignButton label={row.label} className="sign-btn" />
                 </div>
                 {row.hint && <p className="field__hint">{row.hint}</p>}
 
@@ -77,16 +72,18 @@ export function MatrixInput({ question, answer, context, onChange, onPlayOptionV
                     aria-labelledby={`${question.questionId}-${row.key}-label`}
                   >
                     {options.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={cell?.choice === option.value}
-                        className={`pill${cell?.choice === option.value ? ' pill--selected' : ''}`}
-                        onClick={() => updateRow(row.key, { ...cell, choice: option.value })}
-                      >
-                        {cell?.choice === option.value ? `✔ ${option.label}` : option.label}
-                      </button>
+                      <span key={option.value} className="pill-with-sign">
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={cell?.choice === option.value}
+                          className={`pill${cell?.choice === option.value ? ' pill--selected' : ''}`}
+                          onClick={() => updateRow(row.key, { ...cell, choice: option.value })}
+                        >
+                          {cell?.choice === option.value ? `✔ ${option.label}` : option.label}
+                        </button>
+                        <SignButton label={option.label} className="sign-btn" />
+                      </span>
                     ))}
                   </div>
                 )}
@@ -96,8 +93,8 @@ export function MatrixInput({ question, answer, context, onChange, onPlayOptionV
                     {(matrix.columns ?? []).map((column) => {
                       const checked = cell?.checks?.includes(column.value) ?? false;
                       return (
+                        <span key={column.value} className="pill-with-sign">
                         <button
-                          key={column.value}
                           type="button"
                           aria-pressed={checked}
                           className={`pill${checked ? ' pill--selected' : ''}`}
@@ -111,6 +108,8 @@ export function MatrixInput({ question, answer, context, onChange, onPlayOptionV
                         >
                           {checked ? `✔ ${column.label}` : column.label}
                         </button>
+                        <SignButton label={column.label} className="sign-btn" />
+                        </span>
                       );
                     })}
                   </div>

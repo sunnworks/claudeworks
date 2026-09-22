@@ -1,32 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { APPROVED_SIGN_ASSETS, pickRandomSample, resolveSignVideoUrl, type SignSample } from '../data/signAssets';
+import { useSignVideo } from './SignVideoContext';
 
-export interface SignVideoRequest {
-  /** 영상과 함께 보여줄 자막(공식문구 또는 선택지 문구) */
-  caption: string;
-  /** 무엇에 대한 영상인지 */
-  kind: '문항' | '선택지' | '도움말';
-  /** 값이 바뀌면 새 영상을 고른다 */
-  key: string;
-  /** 사용자가 버튼을 눌러 요청한 경우에만 재생을 시작한다(자동재생 금지) */
-  autoPlay?: boolean;
-  /** 문항별 승인 영상이 있으면 사용할 자산 ID */
-  signAssetId?: string;
-}
-
-interface Props {
-  request: SignVideoRequest;
-}
-
-const SPEEDS = [1, 0.75];
+const SPEEDS = [1, 0.75, 0.5];
 
 /**
- * 수어영상 패널.
+ * 수어영상 패널. 모든 화면에 같은 자리에서 나타난다.
+ *
+ * - 문항·선택지·화면 안내마다 수어영상을 재생한다.
+ * - 화면이 바뀌면 자동으로 재생한다(자동재생 끄기 제공). 영상에 소리가 없어 브라우저 정책에 걸리지 않는다.
+ * - 영상 영역 크기는 고정이라 문항이 바뀌어도 화면이 흔들리지 않는다.
  * - 문항별로 검수 완료된 영상이 없으므로 샘플 수어영상을 무작위로 재생하고 배지를 항상 표시한다.
- * - 자동재생하지 않으며 재생·정지·다시보기·0.75배속·전체화면을 제공한다.
  * - 재생에 실패하면 자막과 다시 시도 버튼으로 대체한다.
  */
-export function SignVideoPanel({ request }: Props) {
+export function SignVideoPanel() {
+  const { request, autoPlay, setAutoPlay, zoom, setZoom } = useSignVideo();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sample, setSample] = useState<SignSample>(() => pickRandomSample());
   const [playing, setPlaying] = useState(false);
@@ -38,7 +26,7 @@ export function SignVideoPanel({ request }: Props) {
   const isApproved = Boolean(approvedFile);
   const fileName = approvedFile ?? sample.fileName;
 
-  // 문항(또는 선택지)이 바뀌면 다른 샘플영상을 무작위로 고른다.
+  // 문항·화면이 바뀌면 다른 샘플영상을 무작위로 고른다.
   useEffect(() => {
     setSample((previous) => pickRandomSample(previous.id));
     setFailed(false);
@@ -46,18 +34,18 @@ export function SignVideoPanel({ request }: Props) {
     setPlaying(false);
   }, [request.key]);
 
-  // 사용자가 버튼을 눌러 요청한 경우에만 재생한다.
+  // 자동재생이 켜져 있거나, 사용자가 수어 보기를 눌러 요청했으면 재생한다.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     video.playbackRate = rate;
-    if (request.autoPlay) {
-      void video.play().then(
-        () => setPlaying(true),
-        () => setPlaying(false),
-      );
-    }
-  }, [request.key, request.autoPlay, rate, fileName]);
+    if (!autoPlay && !request.explicit) return;
+    video.currentTime = 0;
+    void video.play().then(
+      () => setPlaying(true),
+      () => setPlaying(false),
+    );
+  }, [request.key, request.explicit, autoPlay, rate, fileName]);
 
   const play = () => {
     const video = videoRef.current;
@@ -97,18 +85,21 @@ export function SignVideoPanel({ request }: Props) {
   const otherSample = () => {
     setSample((previous) => pickRandomSample(previous.id));
     setFailed(false);
-    setPlaying(false);
+    setFailReason('');
   };
 
   return (
     <section className="sign-panel" aria-label="수어영상">
-      {!isApproved && (
-        <p className="sign-panel__sample-badge">
-          <span aria-hidden="true">●</span> 샘플 수어영상 · 이 문항의 번역본이 아닙니다
-        </p>
-      )}
+      <div className="sign-panel__head">
+        <span className="chip chip--muted">{request.kind} 수어</span>
+        {!isApproved && (
+          <span className="sign-panel__sample-badge">
+            <span aria-hidden="true">●</span> 샘플영상 · 이 문항의 번역본 아님
+          </span>
+        )}
+      </div>
 
-      <div className="sign-panel__frame">
+      <div className={`sign-panel__frame${zoom ? ' sign-panel__frame--zoom' : ''}`}>
         {failed ? (
           <p className="sign-panel__fallback">
             수어영상을 재생할 수 없습니다.
@@ -126,15 +117,13 @@ export function SignVideoPanel({ request }: Props) {
             key={`${fileName}-${request.key}`}
             ref={videoRef}
             playsInline
-            preload="metadata"
+            preload="auto"
             muted
             onEnded={() => setPlaying(false)}
             onError={(event) => {
               const code = event.currentTarget.error?.code;
               setFailReason(
-                code === 4
-                  ? '이 브라우저가 영상 형식(H.264 MP4)을 지원하지 않습니다.'
-                  : '영상을 불러오지 못했습니다.',
+                code === 4 ? '이 브라우저가 영상 형식(H.264 MP4)을 지원하지 않습니다.' : '영상을 불러오지 못했습니다.',
               );
               setFailed(true);
             }}
@@ -169,27 +158,50 @@ export function SignVideoPanel({ request }: Props) {
         <button type="button" className="btn btn--small btn--ghost" onClick={fullscreen} disabled={failed}>
           전체화면
         </button>
-        {!isApproved && (
-          <button type="button" className="btn btn--small btn--ghost" onClick={otherSample}>
-            다른 샘플영상
-          </button>
-        )}
-        {failed && (
+      </div>
+
+      {/* 자주 쓰지 않는 설정은 접어 둔다. 작은 화면에서 영상이 밀려 내려가지 않도록. */}
+      <details className="sign-panel__settings">
+        <summary>영상 설정</summary>
+        <div className="sign-panel__controls">
           <button
             type="button"
             className="btn btn--small btn--ghost"
-            onClick={() => {
-              setFailReason('');
-              setFailed(false);
-            }}
+            onClick={() => setZoom(!zoom)}
+            aria-pressed={zoom}
           >
-            다시 시도
+            {zoom ? '작게 보기' : '크게 보기'}
           </button>
-        )}
-      </div>
+          <button
+            type="button"
+            className="btn btn--small btn--ghost"
+            onClick={() => setAutoPlay(!autoPlay)}
+            aria-pressed={autoPlay}
+          >
+            자동재생 {autoPlay ? '끄기' : '켜기'}
+          </button>
+          {!isApproved && (
+            <button type="button" className="btn btn--small btn--ghost" onClick={otherSample}>
+              다른 샘플영상
+            </button>
+          )}
+          {failed && (
+            <button
+              type="button"
+              className="btn btn--small btn--ghost"
+              onClick={() => {
+                setFailReason('');
+                setFailed(false);
+              }}
+            >
+              다시 시도
+            </button>
+          )}
+        </div>
+      </details>
 
       <p className="sign-panel__caption">
-        <strong>{request.kind} 자막</strong>
+        <strong>자막</strong>
         <br />
         {request.caption}
       </p>
