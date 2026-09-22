@@ -20,7 +20,7 @@ interface Props {
 }
 
 /** S09 전체 답변 검토와 수정 */
-const CAPTION = '지금까지 답한 내용을 확인하세요. 고치고 싶은 문항은 수정을 누르세요.';
+const CAPTION = '답한 내용을 확인하세요. 고치고 싶으면 고치기를 누르세요.';
 
 export function ReviewScreen({
   modules,
@@ -41,22 +41,19 @@ export function ReviewScreen({
   return (
     <div>
       <div className="card">
-        <h2>
-          답변을 확인해 주세요
-          <SignButton label={CAPTION} kind="안내" className="sign-btn sign-btn--inline" />
+        <h2 className="screen-title">
+          <span>답한 내용을 확인하세요</span>
+          <SignButton label={CAPTION} kind="안내" variant="main" className="sign-btn sign-btn--main" />
         </h2>
-        <p>모듈 이름을 누르면 답변이 펼쳐집니다. 수정할 문항은 오른쪽 “수정”을 누르세요.</p>
 
         {incompleteCount > 0 ? (
-          <div className="notice notice--warn" aria-live="polite">
-            <strong>아직 답하지 않았거나 다시 확인할 문항이 {incompleteCount}개 있습니다</strong>
-            모두 채워야 완료할 수 있습니다.
-          </div>
+          <p className="question-sub" aria-live="polite">
+            아직 답하지 않은 질문이 {incompleteCount}개 있습니다.
+          </p>
         ) : (
-          <div className="notice notice--ok" aria-live="polite">
-            <strong>필수문항을 모두 채웠습니다</strong>
-            완료를 누르면 데모 확인표를 볼 수 있습니다.
-          </div>
+          <p className="question-sub" aria-live="polite">
+            모두 답했습니다.
+          </p>
         )}
       </div>
 
@@ -71,10 +68,10 @@ export function ReviewScreen({
         return (
           <details className="review-module" key={module.moduleId} open={missing > 0}>
             <summary>
-              {module.title} · {questions.length}문항
+              {module.title} {questions.length}개
               {missing > 0 ? (
                 <span className="chip" style={{ background: '#fdeaef', color: '#a4123a', borderColor: '#e2909f' }}>
-                  확인 필요 {missing}
+                  {missing}개 남음
                 </span>
               ) : (
                 <span className="chip" style={{ background: '#e3f5ec', color: '#0f6b45', borderColor: '#8ec6ab' }}>
@@ -94,18 +91,17 @@ export function ReviewScreen({
                       <tr key={question.questionId}>
                         <th scope="row">
                           {question.officialText}
-                          <span className="option__hint">{question.questionId}</span>
                         </th>
                         <td className={isUnknown ? 'unknown' : result.complete ? 'answer' : 'missing'}>
                           {isUnknown
-                            ? '잘 모르겠음 · 의료진 확인 요청'
+                            ? '잘 모르겠어요'
                             : result.complete
                               ? formatAnswer(question, answer)
-                              : '확인 필요'}
+                              : '아직 답 안 함'}
                         </td>
                         <td>
                           <button type="button" className="review-row-btn" onClick={() => onJump(question.questionId)}>
-                            수정
+                            고치기
                           </button>
                         </td>
                       </tr>
@@ -120,18 +116,17 @@ export function ReviewScreen({
 
       {showIncomplete && incompleteCount > 0 && (
         <p className="field-error" role="alert">
-          답하지 않은 문항이 남아 있어 완료할 수 없습니다. 확인 필요 표시를 누르면 해당 문항으로 이동합니다.
+          답하지 않은 질문이 남아 있습니다.
         </p>
       )}
 
       <div className="btn-row btn-row--end no-print">
         <button type="button" className="btn btn--ghost" onClick={onBack}>
-          문항으로 돌아가기
+          질문으로 돌아가기
         </button>
-        <button type="button" className="btn btn--primary" onClick={onFinish} disabled={incompleteCount > 0}>
+        <button type="button" className="btn btn--primary btn--wide" onClick={onFinish} disabled={incompleteCount > 0}>
           작성 완료
         </button>
-        <SignButton label="작성을 완료합니다" kind="버튼" className="sign-btn" />
       </div>
     </div>
   );

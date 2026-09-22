@@ -18,10 +18,11 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } } },
     { name: 'mobile-360', use: { ...devices['Desktop Chrome'], viewport: { width: 360, height: 740 } } },
   ],
+  // 빌드 결과를 검사하므로 항상 새로 빌드한 뒤 띄운다. 오래된 dist 로 테스트하는 사고를 막는다.
   webServer: {
-    command: 'npx vite preview --host 127.0.0.1 --port 4173',
+    command: 'npm run build && npx vite preview --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: true,
-    timeout: 60_000,
+    reuseExistingServer: false,
+    timeout: 120_000,
   },
 });

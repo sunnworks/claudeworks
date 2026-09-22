@@ -33,25 +33,16 @@ function AppShell() {
 
       <header className="topbar">
         <div className="topbar__inner">
-          <h1 className="topbar__title">농인용 건강검진 수어 사전문진</h1>
+          <h1 className="topbar__title">건강검진 수어 문진표</h1>
           <AccessibilityBar />
-          <span className="topbar__meta">
-            <span className="demo-badge">데모 · 저장하지 않음</span>
-            {s.scenario && (
-              <span>
-                {' '}
-                {s.scenario.title} · {s.scenario.personLabel}
-              </span>
-            )}
-          </span>
+          {s.scenario && <span className="topbar__meta">{s.scenario.personLabel}</span>}
         </div>
         {showProgress && s.context && (
           <div className="progress">
             <div className="progress__label">
               <span>
-                필수문항 {s.progress.requiredAnswered} / {s.progress.requiredTotal}
+                {s.progress.requiredAnswered} / {s.progress.requiredTotal}
               </span>
-              <span>{s.progress.percent}%</span>
             </div>
             <div
               className="progress__track"
@@ -70,8 +61,7 @@ function AppShell() {
       <main className="app__main" id="main">
         {s.removalNotice && (
           <div className="notice notice--warn" role="status" aria-live="polite">
-            <strong>답변이 바뀌어 {s.removalNotice.count}개 문항이 대상에서 빠졌습니다</strong>
-            빠진 문항의 답변은 삭제했습니다: {s.removalNotice.labels.join(' / ')}
+            답이 바뀌어서 질문 {s.removalNotice.count}개가 없어졌습니다.
             <div className="btn-row" style={{ marginTop: 8 }}>
               <button type="button" className="btn btn--small btn--ghost" onClick={s.dismissRemovalNotice}>
                 확인
@@ -93,7 +83,6 @@ function AppShell() {
 
             {s.screen === 'writer' && s.scenario && (
               <WriterScreen
-                scenario={s.scenario}
                 proxyWriting={s.proxyWriting}
                 onProxyChange={s.setProxyWriting}
                 onNext={() => s.setScreen('modules')}
@@ -101,12 +90,10 @@ function AppShell() {
               />
             )}
 
-            {s.screen === 'modules' && s.scenario && s.context && (
+            {s.screen === 'modules' && s.context && (
               <ModulesScreen
-                scenario={s.scenario}
                 modules={s.modules}
                 context={s.context}
-                proxyWriting={s.proxyWriting}
                 onStart={s.beginQuestions}
                 onBack={() => s.setScreen('writer')}
               />
@@ -169,11 +156,6 @@ function AppShell() {
           </div>
         </div>
       </main>
-
-      <p className="footer-note">
-        시연용 데모입니다. 진단하지 않으며 병원으로 전송하지 않습니다. 공식 문항과 응답값은 서식 원문을 따릅니다.
-        정신건강 위기 상황에서는 119 또는 112, 자살예방상담전화 109로 연락하세요.
-      </p>
 
       {s.safetyOpen && <SafetyModal onAcknowledge={s.acknowledgeSafety} />}
     </div>

@@ -27,8 +27,11 @@ const js = readFileSync(join(dist, 'assets', jsFile), 'utf8');
 const videoDir = join(root, 'public', 'sign-samples');
 const videos = Object.fromEntries(
   readdirSync(videoDir)
-    .filter((name) => name.endsWith('.mp4'))
-    .map((name) => [name, `data:video/mp4;base64,${readFileSync(join(videoDir, name)).toString('base64')}`]),
+    .filter((name) => name.endsWith('.mp4') || name.endsWith('.webm'))
+    .map((name) => {
+      const mime = name.endsWith('.webm') ? 'video/webm' : 'video/mp4';
+      return [name, `data:${mime};base64,${readFileSync(join(videoDir, name)).toString('base64')}`];
+    }),
 );
 
 const embed = `<script>window.__KSL_EMBEDDED_VIDEOS__=${JSON.stringify(videos)};</script>`;

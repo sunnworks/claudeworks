@@ -24,6 +24,9 @@ interface SignVideoContextValue {
   setAutoPlay: (value: boolean) => void;
   zoom: boolean;
   setZoom: (value: boolean) => void;
+  /** 영상 위에 자막을 겹쳐 보여줄지 */
+  showCaption: boolean;
+  setShowCaption: (value: boolean) => void;
 }
 
 const SignVideoCtx = createContext<SignVideoContextValue | undefined>(undefined);
@@ -36,6 +39,7 @@ export function SignVideoProvider({ children }: { children: ReactNode }) {
   });
   const [autoPlay, setAutoPlay] = useState(true);
   const [zoom, setZoom] = useState(true);
+  const [showCaption, setShowCaption] = useState(true);
 
   const setPrimary = useCallback((next: SignVideoRequest) => {
     setRequest((previous) => (previous.key === next.key ? previous : next));
@@ -46,8 +50,8 @@ export function SignVideoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ request, setPrimary, play, autoPlay, setAutoPlay, zoom, setZoom }),
-    [request, setPrimary, play, autoPlay, zoom],
+    () => ({ request, setPrimary, play, autoPlay, setAutoPlay, zoom, setZoom, showCaption, setShowCaption }),
+    [request, setPrimary, play, autoPlay, zoom, showCaption],
   );
 
   return <SignVideoCtx.Provider value={value}>{children}</SignVideoCtx.Provider>;

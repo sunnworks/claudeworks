@@ -10,14 +10,29 @@ export interface SignSample {
   id: string;
   fileName: string;
   label: string;
-  durationSec: number;
+  /** <source type> 에 넣을 미디어 유형 */
+  mimeType: 'video/mp4' | 'video/webm';
 }
 
+/**
+ * 샘플영상 목록. 문항·선택지·안내문을 열 때마다 이 중 하나를 무작위로 재생한다.
+ * mp4(H.264)와 webm(VP9)이 섞여 있어도 브라우저가 알아서 재생한다.
+ */
 export const SIGN_SAMPLES: SignSample[] = [
-  { id: 'sample-01', fileName: 'ksl-sample-01.mp4', label: '샘플 수어영상 1', durationSec: 4.6 },
-  { id: 'sample-02', fileName: 'ksl-sample-02.mp4', label: '샘플 수어영상 2', durationSec: 5.9 },
-  { id: 'sample-03', fileName: 'ksl-sample-03.mp4', label: '샘플 수어영상 3', durationSec: 6.1 },
+  { id: 'sample-01', fileName: 'ksl-sample-01.mp4', label: '샘플 수어영상 1', mimeType: 'video/mp4' },
+  { id: 'sample-02', fileName: 'ksl-sample-02.mp4', label: '샘플 수어영상 2', mimeType: 'video/mp4' },
+  { id: 'sample-03', fileName: 'ksl-sample-03.mp4', label: '샘플 수어영상 3', mimeType: 'video/mp4' },
+  { id: 'sample-04', fileName: 'ksl-sample-04.webm', label: '샘플 수어영상 4', mimeType: 'video/webm' },
+  { id: 'sample-05', fileName: 'ksl-sample-05.webm', label: '샘플 수어영상 5', mimeType: 'video/webm' },
+  { id: 'sample-06', fileName: 'ksl-sample-06.webm', label: '샘플 수어영상 6', mimeType: 'video/webm' },
+  { id: 'sample-07', fileName: 'ksl-sample-07.webm', label: '샘플 수어영상 7', mimeType: 'video/webm' },
+  { id: 'sample-08', fileName: 'ksl-sample-08.webm', label: '샘플 수어영상 8', mimeType: 'video/webm' },
 ];
+
+/** 파일 확장자로 미디어 유형을 정한다. */
+export function mimeTypeOf(fileName: string): 'video/mp4' | 'video/webm' {
+  return fileName.endsWith('.webm') ? 'video/webm' : 'video/mp4';
+}
 
 /** 문항별 승인 완료 영상이 생기면 이 표에 questionId → fileName 으로 등록한다. */
 export const APPROVED_SIGN_ASSETS: Record<string, string> = {};
@@ -47,7 +62,7 @@ export function resolveSignVideoUrl(fileName: string): string {
       const binary = atob(base64);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-      const url = URL.createObjectURL(new Blob([bytes], { type: mime || 'video/mp4' }));
+      const url = URL.createObjectURL(new Blob([bytes], { type: mime || mimeTypeOf(fileName) }));
       objectUrlCache.set(fileName, url);
       return url;
     } catch {
