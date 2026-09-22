@@ -1,0 +1,61 @@
+# 농인용 건강검진 수어 사전문진 데모를 GitHub Pages 로 배포한다.
+# 저장소 Settings → Pages → Source 를 "GitHub Actions" 로 설정해야 동작한다.
+name: Deploy checkup demo
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'claude/**'
+    paths:
+      - 'checkup/**'
+      - '.github/workflows/deploy-checkup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: checkup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: checkup/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      # 압축을 풀고 index.html 을 더블클릭해 실행하는 배포용 ZIP
+      - run: npm run build:zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deaf-checkup-sign-questionnaire-demo-zip
+          path: checkup/dist-zip/*.zip
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: checkup/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
