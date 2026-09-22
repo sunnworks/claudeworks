@@ -34,8 +34,18 @@ npm run build:zip      # dist-zip/deaf-checkup-sign-questionnaire-demo.zip 생�
 
 ### (3) 웹 배포 — GitHub Pages
 
-`main` 계열 브랜치에 push하면 `.github/workflows/deploy-checkup.yml`이 `checkup/dist`를 GitHub Pages로 올립니다.
-저장소 **Settings → Pages → Source 를 GitHub Actions** 로 한 번 설정해야 동작합니다.
+push하면 `.github/workflows/deploy-checkup.yml`이 실행됩니다.
+
+* `build` 잡: 타입검사 → 단위테스트 → 빌드 → 배포용 ZIP 생성.
+  ZIP은 Actions 실행 화면의 **Artifacts → `deaf-checkup-sign-questionnaire-demo-zip`** 에서 내려받습니다.
+  Pages 설정과 무관하게 항상 동작합니다.
+* `deploy` 잡: `checkup/dist`를 GitHub Pages로 올립니다.
+
+> **최초 1회 수동 설정이 필요합니다.**
+> 저장소 **Settings → Pages → Source 를 `GitHub Actions`** 로 바꾸세요.
+> 워크플로가 자동으로 켜려고 시도하지만, Actions 토큰에는 Pages 생성 권한이 없어
+> `Create Pages site failed. Resource not accessible by integration` 으로 실패합니다.
+> 설정 후 Actions에서 워크플로를 다시 실행하면 `https://sunnworks.github.io/claudeworks/` 로 열립니다.
 
 ---
 
