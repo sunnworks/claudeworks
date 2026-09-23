@@ -1,10 +1,17 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { answerCurrentQuestion, checkRadio, currentQuestionId, passModuleDone, startQuestionnaire } from './helpers';
 
 const start = startQuestionnaire;
 
+/** 좁은 화면에서는 화면 보기 설정이 접혀 있다. */
+async function openDisplaySettings(page: Page) {
+  const toggle = page.getByRole('button', { name: '글자·화면' });
+  if (await toggle.isVisible().catch(() => false)) await toggle.click();
+}
+
 test('글자 크기 3단계가 실제로 화면에 적용된다', async ({ page }) => {
   await page.goto('/');
+  await openDisplaySettings(page);
   const rootFontSize = () => page.evaluate(() => getComputedStyle(document.documentElement).fontSize);
 
   expect(await rootFontSize()).toBe('16px');
@@ -18,6 +25,7 @@ test('글자 크기 3단계가 실제로 화면에 적용된다', async ({ page 
 
 test('고대비 모드가 실제 색으로 적용되고 유지된다', async ({ page }) => {
   await page.goto('/');
+  await openDisplaySettings(page);
   await page.getByRole('button', { name: /고대비 켜기/ }).click();
 
   const state = await page.evaluate(() => ({
@@ -31,6 +39,7 @@ test('고대비 모드가 실제 색으로 적용되고 유지된다', async ({ 
 
   // 새로고침해도 화면 설정은 유지된다(건강 답변은 저장하지 않는다)
   await page.reload();
+  await openDisplaySettings(page);
   await expect(page.getByRole('button', { name: /고대비 끄기/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.dataset.contrast)).toBe('high');
 
@@ -40,6 +49,7 @@ test('고대비 모드가 실제 색으로 적용되고 유지된다', async ({ 
 
 test('저장소에는 화면 설정만 남고 건강 답변은 남지 않는다', async ({ page }) => {
   await start(page);
+  await openDisplaySettings(page);
   await page.getByRole('button', { name: /고대비 켜기/ }).click();
   await checkRadio(page, '예');
 
@@ -94,8 +104,8 @@ test('자동재생과 영상 크기 설정을 바꿀 수 있다', async ({ page 
   await expect(page.getByRole('button', { name: '순서대로 보여주기 끄기' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.sign-panel__frame')).not.toHaveClass(/sign-panel__frame--zoom/);
 
-  // 문항 영상은 같은 문장이 아래에 또 나오므로 자막을 겹쳐 쓰지 않는다
-  await expect(page.locator('.sign-panel__subtitle')).toHaveCount(0);
+  // 자막은 지금 무엇을 보여 주는지 언제나 알려 준다
+  await expect(page.locator('.sign-panel__subtitle')).toBeVisible();
   await page.getByRole('button', { name: '수어로 보기: 아니요' }).click();
   await expect(page.locator('.sign-panel__subtitle')).toHaveText('아니요');
 
@@ -111,8 +121,9 @@ test('자동재생과 영상 크기 설정을 바꿀 수 있다', async ({ page 
   expect(after!.height).toBeGreaterThan(before!.height);
 
   await page.getByRole('button', { name: '자막 끄기' }).click();
-  await page.getByRole('button', { name: '수어로 보기: 예' }).click();
   await expect(page.locator('.sign-panel__subtitle')).toHaveCount(0);
+  await page.getByRole('button', { name: '자막 켜기' }).click();
+  await expect(page.locator('.sign-panel__subtitle')).toBeVisible();
 });
 
 test('영상 폭은 아래 작성 칸과 같다', async ({ page }) => {

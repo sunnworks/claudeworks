@@ -377,7 +377,7 @@ video {
   aspect-ratio: 16 / 9;
   /* 아래 질문과 첫 선택지가 함께 보이도록 높이를 제한한다. 가로세로비가 16:9 보다 커지면
      남는 자리는 검은 여백이 되고(contain) 영상은 잘리지 않는다. */
-  max-height: 46vh;
+  max-height: 43vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -398,6 +398,9 @@ video {
   background: #0d1526;
   display: block;
 }
+.sign-panel__frame video[hidden] {
+  display: none;
+}
 .sign-panel__frame--zoom video {
   object-fit: cover;
 }
@@ -407,7 +410,7 @@ video {
   /* 좁은 화면에서 16:9 는 영상이 너무 작다. 좌우 여백만 잘라 세로를 키운다. */
   .sign-panel__frame {
     aspect-ratio: 4 / 3;
-    max-height: 30vh;
+    max-height: 26vh;
   }
   .sign-panel__frame video {
     object-fit: cover;
@@ -1349,4 +1352,41 @@ html[data-contrast='high'] .vbtn--play {
 .pill--signing {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* ---------- 화면 보기 설정: 좁은 화면에서는 접는다 ---------- */
+.a11y {
+  display: contents;
+}
+.a11y__toggle {
+  display: none;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (max-width: 720px) {
+  .a11y__toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+  .a11y-bar {
+    display: none;
+  }
+  .a11y-bar--open {
+    display: flex;
+    flex: 1 1 100%;
+  }
+  .question-sub {
+    margin-bottom: 8px;
+  }
+  .option {
+    min-height: 52px;
+  }
 }

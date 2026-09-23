@@ -94,9 +94,17 @@ test('질문과 선택지가 영상 바로 아래에 보인다', async ({ page }
   const question = await page.locator('.question-official').boundingBox();
   const firstOption = await page.locator('.option').first().boundingBox();
   const navbar = await page.locator('.navbar').boundingBox();
+  const wide = (page.viewportSize()?.width ?? 0) >= 720;
 
-  // 질문과 첫 선택지가 스크롤 없이, 아래 버튼 막대에도 가리지 않고 보인다
+  // 질문은 영상 바로 아래에 오고, 버튼 막대에 가리지 않는다
   expect(question!.y).toBeGreaterThan(frame!.y);
   expect(question!.y + question!.height).toBeLessThan(navbar!.y);
-  expect(firstOption!.y + firstOption!.height).toBeLessThan(navbar!.y);
+
+  // 넓은 화면은 첫 선택지가 통째로 보이고,
+  // 좁은 화면(360x740)은 영상·자막·질문까지 넣으면 자리가 없어 첫 선택지의 시작까지 보인다.
+  if (wide) {
+    expect(firstOption!.y + firstOption!.height).toBeLessThan(navbar!.y);
+  } else {
+    expect(firstOption!.y + 16).toBeLessThan(navbar!.y);
+  }
 });
