@@ -90,6 +90,7 @@ export function SignVideoPanel() {
 
   return (
     <section className="sign-panel" aria-label="수어영상" data-sample={isApproved ? 'approved' : sample.id}>
+      <div className="sign-panel__stage">
       <div className={`sign-panel__frame${zoom ? ' sign-panel__frame--zoom' : ''}`}>
         {failed ? (
           <p className="sign-panel__fallback">영상을 보여 드리지 못했습니다.</p>
@@ -119,6 +120,7 @@ export function SignVideoPanel() {
       {showCaption && request.kind !== '문항' && (
         <p className="sign-panel__subtitle">{request.caption}</p>
       )}
+      </div>
 
       <div className="sign-panel__bar">
         {playing ? (

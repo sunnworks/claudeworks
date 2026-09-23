@@ -39,7 +39,7 @@ export function MultiChoiceInput({ question, answer, onChange }: Props) {
               {option.label}
               {selected && (
                 <span className="option__mark" aria-hidden="true">
-                  ✔ 선택함
+                  ✔
                 </span>
               )}
               {option.hint && <span className="option__hint">{option.hint}</span>}

@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { QuestionRenderer } from '../components/QuestionRenderer';
 import { SignButton } from '../components/SignButton';
 import { useSignVideo } from '../components/SignVideoContext';
-import { findModule, visibleQuestionsOfModule } from '../domain/questionnaireEngine';
+import { findModule } from '../domain/questionnaireEngine';
 import type { EvaluationContext } from '../domain/rules';
 import type { Answer, QuestionDefinition } from '../domain/types';
-import { supportsUnknownFlag } from '../domain/unknown';
+import { bulkNoneTargets, supportsUnknownFlag, type UnknownFlags } from '../domain/unknown';
 import type { ValidationResult } from '../domain/validation';
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   context: EvaluationContext;
   positionLabel: string;
   unknown: boolean;
+  unknownFlags: UnknownFlags;
   onToggleUnknown: () => void;
   onChange: (answer: Answer | undefined) => void;
   onBulkNone: (group: string) => void;
@@ -35,6 +36,7 @@ export function QuestionScreen({
   context,
   positionLabel,
   unknown,
+  unknownFlags,
   onToggleUnknown,
   onChange,
   onBulkNone,
@@ -65,12 +67,16 @@ export function QuestionScreen({
     headingRef.current?.focus();
   }, [question.questionId, question.officialText, question.signAssetId, setPrimary]);
 
-  const bulkGroupRemaining = useMemo(() => {
-    if (!question.bulkNoneGroup) return 0;
-    return visibleQuestionsOfModule(question.moduleId, context).filter(
-      (item) => item.bulkNoneGroup === question.bulkNoneGroup,
-    ).length;
-  }, [question.bulkNoneGroup, question.moduleId, context]);
+  /** 같은 묶음에서 아직 답하지 않은 문항과 그 질환 이름 */
+  const bulkGroup = useMemo(() => {
+    if (!question.bulkNoneGroup) return { count: 0, names: [] as string[] };
+    const remaining = bulkNoneTargets(context, question.bulkNoneGroup, unknownFlags);
+    return {
+      count: remaining.length,
+      // '뇌졸중 또는 중풍으로 진단을 받았거나...' → '뇌졸중 또는 중풍'
+      names: remaining.map((item) => item.officialText.split('으로 진단')[0]),
+    };
+  }, [question.bulkNoneGroup, context, unknownFlags]);
 
   const handleNext = () => {
     if (!unknown && !status.complete) {
@@ -103,27 +109,45 @@ export function QuestionScreen({
 
         <QuestionRenderer question={question} answer={answer} context={context} onChange={onChange} />
 
-        {question.bulkNoneGroup && bulkGroupRemaining > 1 && (
-          <div className="btn-row" style={{ marginBottom: 12 }}>
-            <button
-              type="button"
-              className="btn btn--small btn--ghost"
-              onClick={() => onBulkNone(question.bulkNoneGroup!)}
-            >
-              여기 {bulkGroupRemaining}개 모두 “없음”으로
-            </button>
+        {question.bulkNoneGroup && bulkGroup.count > 1 && (
+          <div className="bulk-none">
+            <div className="bulk-none__row">
+              <button
+                type="button"
+                className="btn btn--small btn--ghost"
+                onClick={() => onBulkNone(question.bulkNoneGroup!)}
+              >
+                앓은 적 없는 병 {bulkGroup.count}가지를 한 번에 “해당 없음”
+              </button>
+              <SignButton
+                label={`앓은 적 없는 병 ${bulkGroup.count}가지를 한 번에 해당 없음으로 표시합니다. ${bulkGroup.names
+                  .slice(0, 3)
+                  .join(', ')} 등입니다.`}
+                className="sign-btn"
+              />
+            </div>
+            <p className="field__hint">
+              {bulkGroup.names.slice(0, 3).join(', ')} 등 {bulkGroup.count}가지입니다. 이미 답한 질문은 그대로
+              둡니다.
+            </p>
           </div>
         )}
 
         <div className="question-actions">
           {canMarkUnknown && (
-            <button
-              type="button"
-              className={`btn btn--small ${unknown ? 'btn--primary' : 'btn--ghost'}`}
-              onClick={onToggleUnknown}
-            >
-              {unknown ? '✔ 잘 모르겠어요' : '잘 모르겠어요'}
-            </button>
+            <>
+              <button
+                type="button"
+                className={`btn btn--small ${unknown ? 'btn--primary' : 'btn--ghost'}`}
+                onClick={onToggleUnknown}
+              >
+                {unknown ? '✔ 잘 모르겠어요' : '잘 모르겠어요'}
+              </button>
+              <SignButton
+                label="잘 모르겠어요. 억지로 고르지 않아도 됩니다. 병원에서 같이 확인합니다."
+                className="sign-btn"
+              />
+            </>
           )}
           {extraHelp && (
             <button type="button" className="question-help-toggle" onClick={() => setShowHelp(!showHelp)}>
@@ -132,7 +156,16 @@ export function QuestionScreen({
           )}
         </div>
 
-        {unknown && <p className="question-sub">모르는 문항으로 표시했어요. 병원에서 같이 확인합니다.</p>}
+        {unknown && (
+          <p className="question-sub">
+            병원에서 같이 확인합니다.
+            <SignButton
+              label="잘 모르겠다고 표시했습니다. 병원에서 같이 확인합니다."
+              kind="안내"
+              className="sign-btn sign-btn--inline"
+            />
+          </p>
+        )}
 
         {showHelp && extraHelp && (
           <p className="question-help-body">

@@ -106,6 +106,7 @@ function AppShell() {
                 status={s.answerStatus(s.currentQuestionId)}
                 context={s.context}
                 unknown={s.unknownFlags[s.currentQuestionId] === true}
+                unknownFlags={s.unknownFlags}
                 onToggleUnknown={() => s.toggleUnknown(s.currentQuestionId!)}
                 positionLabel={(() => {
                   const position = questionPosition(s.currentQuestionId, s.context);

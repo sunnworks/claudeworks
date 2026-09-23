@@ -345,6 +345,10 @@ video {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 10px;
+  /* 영상 폭에 맞춰 상자가 줄어들게 해 양옆 빈 공간을 없앤다 */
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
 }
 .sign-panel__head {
   display: flex;
@@ -353,63 +357,32 @@ video {
   align-items: center;
   margin-bottom: 10px;
 }
-/* 영역 크기를 고정해 문항이 바뀌어도 화면이 흔들리지 않는다. */
+/*
+  영상 크기 규칙.
+  높이를 기준으로 잡고 너비는 화면비에서 계산한다.
+  너비를 100%로 두고 높이만 제한하면 박스가 원본보다 납작해져서 위아래가 잘린다.
+*/
+.sign-panel__stage {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
 .sign-panel__frame {
   position: relative;
   background: #0d1526;
   border: 1px solid var(--border);
   border-radius: 12px 12px 0 0;
   overflow: hidden;
+  height: 46vh;
+  max-height: 520px;
   aspect-ratio: 16 / 9;
-  max-height: 40vh;
-  width: 100%;
-  margin: 0 auto;
+  width: auto;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-@media (max-width: 720px) {
-  .sign-panel__frame {
-    max-height: 31vh;
-  }
-  .app__main {
-    padding-top: 8px;
-  }
-  .navbar {
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  }
-  .question-head {
-    margin-bottom: 4px;
-  }
-  .question-sub {
-    margin-bottom: 10px;
-  }
-  .app__layout__video {
-    margin-bottom: 10px;
-  }
-  .sign-panel {
-    padding: 8px;
-  }
-  .sign-panel__subtitle {
-    padding: 8px 12px;
-    font-size: 1rem;
-  }
-  .vbtn {
-    font-size: 0.875rem;
-    padding: 8px 4px;
-  }
-  /* 작은 화면에서는 질문과 선택지가 먼저 보이도록 머리말을 줄인다 */
-  .topbar__meta {
-    display: none;
-  }
-  .card {
-    padding: 12px;
-  }
-  .question-official {
-    font-size: 1.25rem;
-  }
-}
-/* 크게 보기: 4:3 영역에 맞춰 확대한다. 원본의 좌우 검은 여백만 잘리고 수어 동작은 그대로 보인다. */
+/* 화면 크게: 4:3 으로 잡아 좌우 검은 여백만 줄인다. 수어 동작이 있는 위아래는 자르지 않는다. */
 .sign-panel__frame--zoom {
   aspect-ratio: 4 / 3;
 }
@@ -422,6 +395,49 @@ video {
 }
 .sign-panel__frame--zoom video {
   object-fit: cover;
+}
+
+/* 작은 화면: 질문과 첫 선택지가 스크롤 없이 함께 보이도록 영상과 여백을 줄인다. */
+@media (max-width: 720px) {
+  .sign-panel__frame {
+    height: 31vh;
+    max-height: 320px;
+  }
+  .sign-panel {
+    padding: 8px;
+  }
+  .sign-panel__subtitle {
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+  .vbtn {
+    font-size: 0.875rem;
+    padding: 8px 4px;
+  }
+  .app__main {
+    padding-top: 8px;
+  }
+  .app__layout__video {
+    margin-bottom: 10px;
+  }
+  .navbar {
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  }
+  .topbar__meta {
+    display: none;
+  }
+  .card {
+    padding: 12px;
+  }
+  .question-head {
+    margin-bottom: 4px;
+  }
+  .question-official {
+    font-size: 1.25rem;
+  }
+  .question-sub {
+    margin-bottom: 10px;
+  }
 }
 .sign-panel__fallback {
   color: #fff;
@@ -1132,6 +1148,7 @@ html[data-contrast='high'] .notice strong {
   position: relative;
 }
 .sign-panel__subtitle {
+  width: 100%;
   margin: -1px auto 0;
   padding: 10px 16px;
   background: #0d1526;
@@ -1276,4 +1293,15 @@ html[data-contrast='high'] .vbtn--play {
 }
 .sign-panel__settings-row .vbtn {
   flex: 1 1 auto;
+}
+
+.bulk-none {
+  margin-bottom: 12px;
+}
+.bulk-none__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }

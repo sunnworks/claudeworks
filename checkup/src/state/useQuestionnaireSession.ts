@@ -14,7 +14,7 @@ import {
 } from '../domain/questionnaireEngine';
 import { isSelfHarmResponse, scoreInstruments } from '../domain/scoring';
 import { validateAnswer } from '../domain/validation';
-import type { UnknownFlags } from '../domain/unknown';
+import { bulkNoneTargets, type UnknownFlags } from '../domain/unknown';
 import type { Answer, AnswerMap, ScenarioDefinition, SessionContext } from '../domain/types';
 
 export type ScreenId =
@@ -152,16 +152,19 @@ export function useQuestionnaireSession() {
     [applyAnswers],
   );
 
-  /** 과거력처럼 묶인 문항을 한 번에 '해당 없음'으로 표시한다. */
+  /**
+   * 과거력처럼 묶인 문항을 한 번에 '해당 없음'으로 표시한다.
+   * 이미 답했거나 모름으로 표시한 문항은 건드리지 않는다.
+   */
   const setBulkNone = useCallback(
     (group: string) => {
       if (!context) return;
-      const targets = visibleQuestions(context)
-        .filter((question) => question.bulkNoneGroup === group)
-        .map((question) => [question.questionId, { kind: 'choices', values: ['NONE'] } as Answer] as [string, Answer]);
+      const targets = bulkNoneTargets(context, group, unknownFlags).map(
+        (question) => [question.questionId, { kind: 'choices', values: ['NONE'] } as Answer] as [string, Answer],
+      );
       applyAnswers(targets);
     },
-    [applyAnswers, context],
+    [applyAnswers, context, answers, unknownFlags],
   );
 
   /** 공식 응답에 모름이 없는 문항에서 '잘 모르겠어요'를 표시한다. 값은 저장하지 않는다. */

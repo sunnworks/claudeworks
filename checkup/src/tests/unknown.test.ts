@@ -7,8 +7,8 @@ import {
   findQuestion,
   findUnknownQuestions,
 } from '../domain/questionnaireEngine';
-import { hasOfficialUnknown, supportsUnknownFlag } from '../domain/unknown';
-import type { SessionContext } from '../domain/types';
+import { bulkNoneTargets, hasOfficialUnknown, supportsUnknownFlag } from '../domain/unknown';
+import type { AnswerMap, SessionContext } from '../domain/types';
 
 const scenarioB = SCENARIOS.find((item) => item.scenarioId === 'B')!;
 const session: SessionContext = { scenario: scenarioB, proxyWriting: false, preferredCommunication: [] };
@@ -63,5 +63,29 @@ describe('모름 표시의 효과', () => {
     const context = buildContext(session, {});
     expect(computeProgress(context).requiredAnswered).toBe(0);
     expect(computeProgress(context, { 'SUP-01': true, 'SUP-04': true }).requiredAnswered).toBe(2);
+  });
+});
+
+describe('묶음 일괄 해당 없음 대상 고르기', () => {
+  it('아직 답하지 않은 문항만 대상이 된다', () => {
+    const answers: AnswerMap = {
+      'GEN-HX-01': { kind: 'choices', values: ['DIAGNOSED'] },
+      'GEN-HX-03': { kind: 'choices', values: ['NONE'] },
+    };
+    const context = buildContext(session, answers);
+    const targets = bulkNoneTargets(context, 'GEN-HX', {});
+    const ids = targets.map((question) => question.questionId);
+
+    expect(ids).not.toContain('GEN-HX-01');
+    expect(ids).not.toContain('GEN-HX-03');
+    expect(ids).toContain('GEN-HX-02');
+    expect(ids).toHaveLength(9);
+  });
+
+  it('모름으로 표시한 문항도 건드리지 않는다', () => {
+    const context = buildContext(session, {});
+    const targets = bulkNoneTargets(context, 'GEN-HX', { 'GEN-HX-05': true });
+    expect(targets.map((question) => question.questionId)).not.toContain('GEN-HX-05');
+    expect(targets).toHaveLength(10);
   });
 });

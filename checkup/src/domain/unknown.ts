@@ -28,3 +28,20 @@ export function supportsUnknownFlag(question: QuestionDefinition): boolean {
 }
 
 export type UnknownFlags = Record<string, boolean>;
+
+import { visibleQuestions } from './questionnaireEngine';
+import type { EvaluationContext } from './rules';
+
+/**
+ * 묶음 일괄 '해당 없음'의 대상 문항.
+ * 이미 답했거나 모름으로 표시한 문항은 덮어쓰지 않는다.
+ */
+export function bulkNoneTargets(
+  context: EvaluationContext,
+  group: string,
+  unknownFlags: UnknownFlags,
+): QuestionDefinition[] {
+  return visibleQuestions(context)
+    .filter((question) => question.bulkNoneGroup === group)
+    .filter((question) => !context.answers[question.questionId] && !unknownFlags[question.questionId]);
+}

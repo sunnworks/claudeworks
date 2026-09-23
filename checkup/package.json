@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "build:standalone": "npm run build && node scripts/build-standalone.mjs",
     "build:zip": "npm run build:standalone && node scripts/build-zip.mjs",
-    "verify": "npm run typecheck && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "export:sign": "rolldown src/tools/exportSignScript.ts -o .tmp/sign.mjs --format esm --platform node && node .tmp/sign.mjs scripts/out/sign-script.json && python3 scripts/build-sign-xlsx.py scripts/out/sign-script.json scripts/out/수어촬영대본.xlsx"
   },
   "dependencies": {
     "react": "19.3.0",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@types/node": "^26.6.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "jsdom": "28.0.0",
