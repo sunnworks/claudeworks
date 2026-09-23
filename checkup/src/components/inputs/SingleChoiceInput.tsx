@@ -1,5 +1,6 @@
 import type { Answer, QuestionDefinition } from '../../domain/types';
 import { SignButton } from '../SignButton';
+import { useSignVideo } from '../SignVideoContext';
 
 interface Props {
   question: QuestionDefinition;
@@ -9,6 +10,7 @@ interface Props {
 
 export function SingleChoiceInput({ question, answer, onChange }: Props) {
   const current = answer && answer.kind === 'choice' ? answer : undefined;
+  const { isSigning } = useSignVideo();
 
   return (
     <div className="options" role="radiogroup" aria-labelledby={`${question.questionId}-label`}>
@@ -18,7 +20,12 @@ export function SingleChoiceInput({ question, answer, onChange }: Props) {
         return (
           <div key={option.value}>
             <div className="option-row">
-            <label className={`option${selected ? ' option--selected' : ''}`} htmlFor={inputId}>
+            <label
+              className={`option${selected ? ' option--selected' : ''}${
+                isSigning(option.label) ? ' option--signing' : ''
+              }`}
+              htmlFor={inputId}
+            >
               <input
                 id={inputId}
                 type="radio"

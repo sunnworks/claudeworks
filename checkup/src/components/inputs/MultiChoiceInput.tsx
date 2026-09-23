@@ -1,5 +1,6 @@
 import type { Answer, QuestionDefinition } from '../../domain/types';
 import { SignButton } from '../SignButton';
+import { useSignVideo } from '../SignVideoContext';
 
 interface Props {
   question: QuestionDefinition;
@@ -9,6 +10,7 @@ interface Props {
 
 export function MultiChoiceInput({ question, answer, onChange }: Props) {
   const values = answer && answer.kind === 'choices' ? answer.values : [];
+  const { isSigning } = useSignVideo();
 
   const toggle = (value: string, exclusive: boolean) => {
     if (exclusive) {
@@ -28,7 +30,12 @@ export function MultiChoiceInput({ question, answer, onChange }: Props) {
         const inputId = `${question.questionId}-${option.value}`;
         return (
           <div key={option.value} className="option-row">
-          <label className={`option${selected ? ' option--selected' : ''}`} htmlFor={inputId}>
+          <label
+            className={`option${selected ? ' option--selected' : ''}${
+              isSigning(option.label) ? ' option--signing' : ''
+            }`}
+            htmlFor={inputId}
+          >
             <input
               id={inputId}
               type="checkbox"

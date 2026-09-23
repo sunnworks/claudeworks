@@ -12,11 +12,11 @@ interface Props {
 const CAPTION = '어떤 분의 문진표를 작성할지 고르세요.';
 
 export function ScenarioScreen({ scenarios, onSelect }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
 
   useEffect(() => {
-    setPrimary({ caption: CAPTION, kind: '문항', key: 'screen-scenario' });
-  }, [setPrimary]);
+    setPlaylist([{ caption: CAPTION, kind: '문항', key: 'screen-scenario' }], 'screen-scenario');
+  }, [setPlaylist]);
 
   return (
     <div className="card">

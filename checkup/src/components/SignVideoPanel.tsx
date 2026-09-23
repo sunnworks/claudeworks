@@ -20,7 +20,19 @@ const SPEEDS = [1, 0.75, 0.5];
  * - 재생에 실패하면 자막과 다시 시도 버튼으로 대체한다.
  */
 export function SignVideoPanel() {
-  const { request, autoPlay, setAutoPlay, zoom, setZoom, showCaption, setShowCaption } = useSignVideo();
+  const {
+    request,
+    advance,
+    position,
+    autoPlay,
+    setAutoPlay,
+    autoSequence,
+    setAutoSequence,
+    zoom,
+    setZoom,
+    showCaption,
+    setShowCaption,
+  } = useSignVideo();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [sample, setSample] = useState<SignSample>(() => pickRandomSample());
   const [playing, setPlaying] = useState(false);
@@ -52,6 +64,13 @@ export function SignVideoPanel() {
       () => setPlaying(false),
     );
   }, [request.key, request.explicit, autoPlay, rate, fileName]);
+
+  // 영상을 못 불러와도 순서가 멈추지 않게 잠시 뒤 다음으로 넘어간다.
+  useEffect(() => {
+    if (!failed || !autoPlay || !autoSequence) return;
+    const timer = window.setTimeout(() => advance(), 1500);
+    return () => window.clearTimeout(timer);
+  }, [failed, request.key, autoPlay, autoSequence, advance]);
 
   const play = () => {
     const video = videoRef.current;
@@ -101,7 +120,10 @@ export function SignVideoPanel() {
             playsInline
             preload="auto"
             muted
-            onEnded={() => setPlaying(false)}
+            onEnded={() => {
+              setPlaying(false);
+              advance();
+            }}
             onError={() => setFailed(true)}
             aria-label={`${request.kind} 수어영상`}
           >
@@ -109,7 +131,21 @@ export function SignVideoPanel() {
           </video>
         )}
 
-        {/* 자막은 영상 위에 바로 겹쳐 보여준다. 영상이 시작되기 전부터 보인다. */}
+        {/* 지금 몇 번째를 보여 주는지 점으로 알린다. 영상 위에 얹어 화면 높이를 쓰지 않는다. */}
+        {position.total > 1 && (
+          <div className="sign-panel__steps">
+            <span className="visually-hidden">
+              수어로 보여 주는 순서 {position.index} / {position.total}
+            </span>
+            {Array.from({ length: position.total }, (_, order) => (
+              <span
+                key={order}
+                aria-hidden="true"
+                className={`sign-panel__step${order + 1 === position.index ? ' sign-panel__step--on' : ''}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/*
@@ -177,6 +213,14 @@ export function SignVideoPanel() {
             aria-pressed={autoPlay}
           >
             자동재생 {autoPlay ? '끄기' : '켜기'}
+          </button>
+          <button
+            type="button"
+            className="vbtn"
+            onClick={() => setAutoSequence(!autoSequence)}
+            aria-pressed={autoSequence}
+          >
+            순서대로 보여주기 {autoSequence ? '끄기' : '켜기'}
           </button>
           {failed && (
             <button type="button" className="vbtn" onClick={() => setFailed(false)}>

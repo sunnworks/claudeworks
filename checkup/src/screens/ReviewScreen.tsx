@@ -32,11 +32,11 @@ export function ReviewScreen({
   onFinish,
   onBack,
 }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
 
   useEffect(() => {
-    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-review' });
-  }, [setPrimary]);
+    setPlaylist([{ caption: CAPTION, kind: '안내', key: 'screen-review' }], 'screen-review');
+  }, [setPlaylist]);
 
   return (
     <div>

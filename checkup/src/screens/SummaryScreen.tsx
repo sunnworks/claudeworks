@@ -38,13 +38,13 @@ export function SummaryScreen({
   unknownQuestions,
   onRestart,
 }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
   const needsReview = scores.filter((score) => score.medicalReview);
   const facilityTasks = buildFacilityChecklist(context.answers);
 
   useEffect(() => {
-    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-summary' });
-  }, [setPrimary]);
+    setPlaylist([{ caption: CAPTION, kind: '안내', key: 'screen-summary' }], 'screen-summary');
+  }, [setPlaylist]);
 
   return (
     <div>

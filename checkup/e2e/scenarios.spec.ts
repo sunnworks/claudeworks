@@ -93,10 +93,10 @@ test('질문과 선택지가 영상 바로 아래에 보인다', async ({ page }
   const frame = await page.locator('.sign-panel__frame').boundingBox();
   const question = await page.locator('.question-official').boundingBox();
   const firstOption = await page.locator('.option').first().boundingBox();
-  const viewport = page.viewportSize()!;
+  const navbar = await page.locator('.navbar').boundingBox();
 
-  // 질문과 첫 선택지가 스크롤 없이 화면 안에 들어온다
+  // 질문과 첫 선택지가 스크롤 없이, 아래 버튼 막대에도 가리지 않고 보인다
   expect(question!.y).toBeGreaterThan(frame!.y);
-  expect(question!.y + question!.height).toBeLessThan(viewport.height);
-  expect(firstOption!.y + firstOption!.height).toBeLessThan(viewport.height);
+  expect(question!.y + question!.height).toBeLessThan(navbar!.y);
+  expect(firstOption!.y + firstOption!.height).toBeLessThan(navbar!.y);
 });

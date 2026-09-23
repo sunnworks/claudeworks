@@ -88,10 +88,11 @@ test('문항과 선택지마다 수어영상 버튼이 있다', async ({ page })
 test('자동재생과 영상 크기 설정을 바꿀 수 있다', async ({ page }) => {
   await start(page);
 
-  // 기본값: 자동재생 켜짐 · 화면 크게 · 자막 켜짐
+  // 기본값: 자동재생 켜짐 · 순서대로 보여주기 켜짐 · 좌우 넓은 화면 · 자막 켜짐
   await page.getByRole('button', { name: '영상 설정' }).click();
   await expect(page.getByRole('button', { name: '자동재생 끄기' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.sign-panel__frame')).toHaveClass(/sign-panel__frame--zoom/);
+  await expect(page.getByRole('button', { name: '순서대로 보여주기 끄기' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.sign-panel__frame')).not.toHaveClass(/sign-panel__frame--zoom/);
 
   // 문항 영상은 같은 문장이 아래에 또 나오므로 자막을 겹쳐 쓰지 않는다
   await expect(page.locator('.sign-panel__subtitle')).toHaveCount(0);
@@ -101,12 +102,66 @@ test('자동재생과 영상 크기 설정을 바꿀 수 있다', async ({ page 
   await page.getByRole('button', { name: '자동재생 끄기' }).click();
   await expect(page.getByRole('button', { name: '자동재생 켜기' })).toHaveAttribute('aria-pressed', 'false');
 
-  await page.getByRole('button', { name: '화면 작게' }).click();
-  await expect(page.locator('.sign-panel__frame')).not.toHaveClass(/sign-panel__frame--zoom/);
+  // 화면 크게: 정사각형이 되어 세로가 커지고 가로폭은 그대로다
+  const before = await page.locator('.sign-panel__frame').boundingBox();
+  await page.getByRole('button', { name: '화면 크게' }).click();
+  await expect(page.locator('.sign-panel__frame')).toHaveClass(/sign-panel__frame--zoom/);
+  const after = await page.locator('.sign-panel__frame').boundingBox();
+  expect(Math.round(after!.width)).toBe(Math.round(before!.width));
+  expect(after!.height).toBeGreaterThan(before!.height);
 
   await page.getByRole('button', { name: '자막 끄기' }).click();
   await page.getByRole('button', { name: '수어로 보기: 예' }).click();
   await expect(page.locator('.sign-panel__subtitle')).toHaveCount(0);
+});
+
+test('영상 폭은 아래 작성 칸과 같다', async ({ page }) => {
+  await start(page);
+  const frame = await page.locator('.sign-panel__frame').boundingBox();
+  const card = await page.locator('.card[data-question-id]').boundingBox();
+  // 상자 안쪽 여백(좌우 8px)만큼만 차이가 난다
+  expect(Math.abs(card!.width - frame!.width)).toBeLessThanOrEqual(20);
+});
+
+test('질문과 선택지를 순서대로 하나씩 수어로 보여 준다', async ({ page }) => {
+  await start(page);
+
+  // SUP-01 은 문항 · 쉬운설명 · 예 · 아니요 네 단계다
+  const dots = page.locator('.sign-panel__step');
+  await expect(dots).toHaveCount(4);
+
+  // 샘플영상 하나가 18초가 넘어서 넉넉히 기다린다
+  const order: number[] = [];
+  for (let step = 0; step < 90; step += 1) {
+    await page.waitForTimeout(600);
+    const index = await page.evaluate(() => {
+      const all = [...document.querySelectorAll('.sign-panel__step')];
+      return all.findIndex((dot) => dot.classList.contains('sign-panel__step--on')) + 1;
+    });
+    if (order[order.length - 1] !== index) order.push(index);
+    if (index === 4) break;
+  }
+
+  // 1 → 2 → 3 → 4 순서로 넘어간다
+  expect(order[0]).toBe(1);
+  expect(order[order.length - 1]).toBe(4);
+  expect(order).toEqual([...order].sort((a, b) => a - b));
+
+  // 선택지 차례에는 그 선택지가 화면에서 강조된다
+  await expect(page.locator('.option--signing')).toHaveCount(1);
+});
+
+test('순서대로 보여주기를 끄면 다음으로 넘어가지 않는다', async ({ page }) => {
+  await start(page);
+  await page.getByRole('button', { name: '영상 설정' }).click();
+  await page.getByRole('button', { name: '순서대로 보여주기 끄기' }).click();
+
+  await page.waitForTimeout(3000);
+  const index = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('.sign-panel__step')];
+    return all.findIndex((dot) => dot.classList.contains('sign-panel__step--on')) + 1;
+  });
+  expect(index).toBe(1);
 });
 
 test('영상 영역 크기는 문항이 바뀌어도 고정이다', async ({ page }) => {

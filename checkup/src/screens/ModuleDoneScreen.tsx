@@ -11,12 +11,15 @@ interface Props {
 }
 
 export function ModuleDoneScreen({ module, missingCount, onContinue, onReview }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
   const caption = `${module?.title ?? '이 부분'} 끝났습니다. 다음으로 갑니다.`;
 
   useEffect(() => {
-    setPrimary({ caption, kind: '안내', key: `screen-moduledone-${module?.moduleId ?? 'none'}` });
-  }, [setPrimary, caption, module?.moduleId]);
+    setPlaylist(
+      [{ caption, kind: '안내', key: `screen-moduledone-${module?.moduleId ?? 'none'}` }],
+      `screen-moduledone-${module?.moduleId ?? 'none'}`,
+    );
+  }, [setPlaylist, caption, module?.moduleId]);
 
   return (
     <div>

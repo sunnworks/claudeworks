@@ -10,11 +10,11 @@ const CAPTION = '건강검진 문진표를 수어로 보고 직접 작성합니�
 
 /** 시작 화면. 글은 짧게, 필요한 말만 둔다. */
 export function IntroScreen({ onStart }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
 
   useEffect(() => {
-    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-intro' });
-  }, [setPrimary]);
+    setPlaylist([{ caption: CAPTION, kind: '안내', key: 'screen-intro' }], 'screen-intro');
+  }, [setPlaylist]);
 
   return (
     <div>

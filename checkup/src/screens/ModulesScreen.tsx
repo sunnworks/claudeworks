@@ -15,11 +15,11 @@ interface Props {
 const CAPTION = '이런 질문들을 물어봅니다. 준비되면 시작하세요.';
 
 export function ModulesScreen({ modules, context, onStart, onBack }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
 
   useEffect(() => {
-    setPrimary({ caption: CAPTION, kind: '안내', key: 'screen-modules' });
-  }, [setPrimary]);
+    setPlaylist([{ caption: CAPTION, kind: '안내', key: 'screen-modules' }], 'screen-modules');
+  }, [setPlaylist]);
 
   const counts = modules.map((module) => ({
     module,

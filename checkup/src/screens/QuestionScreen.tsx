@@ -5,6 +5,7 @@ import { useSignVideo } from '../components/SignVideoContext';
 import { findModule } from '../domain/questionnaireEngine';
 import type { EvaluationContext } from '../domain/rules';
 import type { Answer, QuestionDefinition } from '../domain/types';
+import { buildQuestionPlaylist } from '../domain/signPlaylist';
 import { bulkNoneTargets, supportsUnknownFlag, type UnknownFlags } from '../domain/unknown';
 import type { ValidationResult } from '../domain/validation';
 
@@ -46,7 +47,7 @@ export function QuestionScreen({
 }: Props) {
   const [showErrors, setShowErrors] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const module = findModule(question.moduleId);
   const canMarkUnknown = supportsUnknownFlag(question);
@@ -57,15 +58,18 @@ export function QuestionScreen({
   useEffect(() => {
     setShowErrors(false);
     setShowHelp(false);
-    setPrimary({
-      caption: question.officialText,
-      kind: '문항',
-      key: question.questionId,
-      signAssetId: question.signAssetId,
-    });
+    setPlaylist(
+      buildQuestionPlaylist(question).map((item, order) => ({
+        caption: item.caption,
+        kind: item.kind,
+        signAssetId: item.signAssetId,
+        key: `${question.questionId}-${order}`,
+      })),
+      question.questionId,
+    );
     window.scrollTo({ top: 0, behavior: 'auto' });
     headingRef.current?.focus();
-  }, [question.questionId, question.officialText, question.signAssetId, setPrimary]);
+  }, [question, setPlaylist]);
 
   /** 같은 묶음에서 아직 답하지 않은 문항과 그 질환 이름 */
   const bulkGroup = useMemo(() => {

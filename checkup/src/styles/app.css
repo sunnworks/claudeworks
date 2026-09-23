@@ -138,7 +138,7 @@ video {
   width: 100%;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 12px 16px 120px;
+  padding: 8px 16px 112px;
 }
 
 /* ---------- 머리말 ---------- */
@@ -182,18 +182,21 @@ video {
 .progress {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 16px 8px;
+  padding: 0 16px 7px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .progress__label {
-  display: flex;
-  justify-content: flex-start;
-  gap: 12px;
+  flex: 0 0 auto;
   font-size: 0.875rem;
+  font-weight: 700;
   color: var(--text-muted);
-  margin-bottom: 3px;
+  white-space: nowrap;
 }
 .progress__track {
-  height: 10px;
+  flex: 1 1 auto;
+  height: 8px;
   background: var(--surface-muted);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -211,7 +214,7 @@ video {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 14px 16px;
   margin-bottom: 12px;
 }
 @media (max-width: 480px) {
@@ -336,7 +339,7 @@ video {
   margin: 0 auto;
 }
 .app__layout__video {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .sign-panel {
@@ -344,10 +347,9 @@ video {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 10px;
-  /* 영상 폭에 맞춰 상자가 줄어들게 해 양옆 빈 공간을 없앤다 */
-  width: fit-content;
-  max-width: 100%;
+  padding: 8px;
+  /* 아래 작성 칸과 같은 폭을 쓴다 */
+  width: 100%;
   margin: 0 auto;
 }
 .sign-panel__head {
@@ -363,9 +365,7 @@ video {
   너비를 100%로 두고 높이만 제한하면 박스가 원본보다 납작해져서 위아래가 잘린다.
 */
 .sign-panel__stage {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
+  width: 100%;
 }
 .sign-panel__frame {
   position: relative;
@@ -373,18 +373,23 @@ video {
   border: 1px solid var(--border);
   border-radius: 12px 12px 0 0;
   overflow: hidden;
-  height: 46vh;
-  max-height: 520px;
+  width: 100%;
   aspect-ratio: 16 / 9;
-  width: auto;
-  max-width: 100%;
+  /* 아래 질문과 첫 선택지가 함께 보이도록 높이를 제한한다. 가로세로비가 16:9 보다 커지면
+     남는 자리는 검은 여백이 되고(contain) 영상은 잘리지 않는다. */
+  max-height: 46vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-/* 화면 크게: 4:3 으로 잡아 좌우 검은 여백만 줄인다. 수어 동작이 있는 위아래는 자르지 않는다. */
+/*
+  화면 크게: 정사각형으로 잡는다. 폭은 그대로 두고 높이가 커지므로 영상이 훨씬 커진다.
+  원본(16:9)의 좌우 검은 여백만 잘리고, 수어 동작이 있는 위아래는 잘리지 않는다.
+  가로세로비가 16:9(1.78)보다 작기만 하면 세로는 절대 잘리지 않는다.
+*/
 .sign-panel__frame--zoom {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
+  max-height: 74vh;
 }
 .sign-panel__frame video {
   width: 100%;
@@ -399,9 +404,17 @@ video {
 
 /* 작은 화면: 질문과 첫 선택지가 스크롤 없이 함께 보이도록 영상과 여백을 줄인다. */
 @media (max-width: 720px) {
+  /* 좁은 화면에서 16:9 는 영상이 너무 작다. 좌우 여백만 잘라 세로를 키운다. */
   .sign-panel__frame {
-    height: 31vh;
-    max-height: 320px;
+    aspect-ratio: 4 / 3;
+    max-height: 30vh;
+  }
+  .sign-panel__frame video {
+    object-fit: cover;
+  }
+  .sign-panel__frame--zoom {
+    aspect-ratio: 1 / 1;
+    max-height: 62vh;
   }
   .sign-panel {
     padding: 8px;
@@ -488,7 +501,7 @@ video {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .chip {
   display: inline-block;
@@ -508,8 +521,8 @@ video {
 .question-official {
   font-size: 1.375rem;
   font-weight: 700;
-  line-height: 1.45;
-  margin: 2px 0 6px;
+  line-height: 1.4;
+  margin: 0 0 4px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -520,7 +533,7 @@ video {
 .question-sub {
   font-size: 1rem;
   color: var(--text-muted);
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
 .question-help-toggle {
   border: none;
@@ -1304,4 +1317,36 @@ html[data-contrast='high'] .vbtn--play {
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 4px;
+}
+
+/* ---------- 순서 표시 점 ---------- */
+.sign-panel__steps {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  max-width: 60%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.sign-panel__step {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+}
+.sign-panel__step--on {
+  background: #ffffff;
+  transform: scale(1.35);
+}
+
+/* ---------- 지금 수어로 보여 주는 선택지 ---------- */
+.option--signing,
+.pill--signing {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }

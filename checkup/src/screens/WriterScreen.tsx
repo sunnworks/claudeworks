@@ -13,11 +13,11 @@ const CAPTION = '누가 작성하나요? 본인인가요, 다른 사람이 대�
 
 /** 작성자 확인. 의사소통 방법은 문진 안 SUP-05·SUP-06 에서 수어와 함께 묻는다. */
 export function WriterScreen({ proxyWriting, onProxyChange, onNext, onBack }: Props) {
-  const { setPrimary } = useSignVideo();
+  const { setPlaylist } = useSignVideo();
 
   useEffect(() => {
-    setPrimary({ caption: CAPTION, kind: '문항', key: 'screen-writer' });
-  }, [setPrimary]);
+    setPlaylist([{ caption: CAPTION, kind: '문항', key: 'screen-writer' }], 'screen-writer');
+  }, [setPlaylist]);
 
   return (
     <div>
