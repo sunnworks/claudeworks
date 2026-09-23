@@ -1,5 +1,22 @@
 import type { QuestionDefinition } from './types';
 
+/** 짧은 단어로 보는 최대 글자 수 */
+export const SHORT_CAPTION_MAX_CHARS = 12;
+/** 짧은 단어를 보여 주는 최대 시간(밀리초) */
+export const SHORT_ITEM_MAX_MS = 5000;
+
+/**
+ * 이 문구를 정해진 시간에서 끊어도 되는가.
+ *
+ * '기타', '안내견' 같은 짧은 선택지는 수어로 1~2초면 끝난다.
+ * 그런데 지금 샘플영상은 문항 내용과 무관한 10초짜리라 기다리는 시간이 길다.
+ * 짧은 선택지에만 시간 제한을 두고, 질문처럼 긴 문장은 절대 끊지 않는다.
+ * 문장을 중간에 끊으면 수어의 뜻이 달라진다.
+ */
+export function isShortChoice(kind: string, caption: string): boolean {
+  return kind === '선택지' && caption.trim().length <= SHORT_CAPTION_MAX_CHARS;
+}
+
 export interface SignPlaylistItem {
   caption: string;
   kind: '문항' | '선택지' | '안내';

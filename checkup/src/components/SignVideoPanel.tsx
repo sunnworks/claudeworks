@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { APPROVED_SIGN_ASSETS, pickRandomSample, resolveSignVideoUrl } from '../data/signAssets';
+import { SHORT_ITEM_MAX_MS, isShortChoice } from '../domain/signPlaylist';
 import { useSignVideo } from './SignVideoContext';
 
 const SPEEDS = [1, 0.75, 0.5];
@@ -7,20 +8,15 @@ const SPEEDS = [1, 0.75, 0.5];
 const STALL_TIMEOUT_MS = 5000;
 /** 재생에 실패했을 때 다음 순서로 넘어가는 시간 */
 const FAIL_ADVANCE_MS = 1500;
-/**
- * 순서 재생에서 샘플영상 한 편을 보여 주는 최대 시간.
- * 샘플은 문항 내용과 무관한 대체영상이고 길이가 4~19초로 제각각이라,
- * 끝까지 틀면 한 문항을 도는 데 40초가 넘어 멈춘 것처럼 보인다.
- * 검수 완료된 문항 전용 영상(APPROVED_SIGN_ASSETS)은 끝까지 재생한다.
- */
-const SAMPLE_STEP_MS = 3500;
 
 /**
  * 수어영상 패널. 모든 화면에 같은 자리에서 나타난다.
  *
- * 영상 요소는 한 번만 만들고 src 만 바꾼다.
- * 요소를 매번 새로 만들면 재생 요청이 서로를 끊어 'play() interrupted' 오류가 나고
- * 순서 재생이 중간에 멈춘다.
+ * - 영상 요소는 한 번만 만들고 src 만 바꾼다.
+ *   요소를 매번 새로 만들면 재생 요청이 서로를 끊어 'play() interrupted' 오류가 나고
+ *   순서 재생이 중간에 멈춘다.
+ * - 질문처럼 긴 문장은 **끝까지** 재생한다. 수어는 문장을 중간에 끊으면 뜻이 달라진다.
+ *   짧은 선택지(단어)만 SHORT_ITEM_MAX_MS 까지 보여 주고 넘어간다.
  */
 export function SignVideoPanel() {
   const {
@@ -94,17 +90,28 @@ export function SignVideoPanel() {
     return () => window.clearTimeout(timer);
   }, [failed, request.key, autoPlay, autoSequence, advance]);
 
-  // 순서 재생 중 샘플영상은 정해진 시간만 보여 주고 다음으로 넘어간다.
+  // 짧은 선택지는 정해진 시간까지만 보여 준다. 질문처럼 긴 문장은 끊지 않는다.
   useEffect(() => {
     if (!playing || !autoPlay || !autoSequence) return;
     if (position.total <= 1 || approvedFile) return;
+    if (!isShortChoice(request.kind, request.caption)) return;
     const timer = window.setTimeout(() => {
       videoRef.current?.pause();
       setPlaying(false);
       advance();
-    }, SAMPLE_STEP_MS);
+    }, SHORT_ITEM_MAX_MS);
     return () => window.clearTimeout(timer);
-  }, [playing, request.key, autoPlay, autoSequence, position.total, approvedFile, advance]);
+  }, [
+    playing,
+    request.key,
+    request.kind,
+    request.caption,
+    autoPlay,
+    autoSequence,
+    position.total,
+    approvedFile,
+    advance,
+  ]);
 
   // 시작도 실패도 하지 않고 멈춰 있으면 다음으로 넘어간다.
   useEffect(() => {

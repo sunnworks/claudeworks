@@ -19,14 +19,23 @@ mkdirSync(folder, { recursive: true });
 
 cpSync(join(root, 'dist-standalone', 'index.html'), join(folder, 'index.html'));
 
+// 영상은 index.html 안에 이미 들어 있다. 그래도 원본 파일을 함께 넣어
+// ZIP 안을 열었을 때 수어영상이 들어 있는지 눈으로 확인할 수 있게 한다.
+cpSync(join(root, 'public', 'sign-samples'), join(folder, 'sign-samples'), { recursive: true });
+
 writeFileSync(
   join(folder, 'HOW-TO-START.txt'),
   [
     '농인용 건강검진 수어 사전문진 데모 — 실행 방법',
     '',
     '1. 이 폴더의 index.html 을 더블클릭합니다.',
-    '2. 인터넷 연결이 없어도 됩니다. 수어영상까지 파일 하나에 들어 있습니다.',
+    '2. 인터넷 연결이 없어도 됩니다. 수어영상은 index.html 안에 들어 있습니다.',
     '3. 크롬, 엣지, 사파리에서 열립니다.',
+    '',
+    '폴더 안에 무엇이 있나요',
+    '- index.html : 문진표 화면. 수어영상 8편이 이 파일 안에 들어 있습니다.',
+    '- sign-samples : 같은 수어영상의 원본 파일입니다. 확인용이며 실행에는 필요 없습니다.',
+    '- HOW-TO-START.txt : 이 파일입니다.',
     '',
     '주의',
     '- 시연용 데모입니다. 병원이나 국민건강보험공단으로 전송되지 않습니다.',

@@ -141,9 +141,9 @@ test('질문과 선택지를 순서대로 하나씩 수어로 보여 준다', as
   const dots = page.locator('.sign-panel__step');
   await expect(dots).toHaveCount(4);
 
-  // 샘플영상 하나가 18초가 넘어서 넉넉히 기다린다
+  // 문장 영상을 끝까지 재생한다. 샘플 하나가 18초가 넘어서 넉넉히 기다린다.
   const order: number[] = [];
-  for (let step = 0; step < 90; step += 1) {
+  for (let step = 0; step < 150; step += 1) {
     await page.waitForTimeout(600);
     const index = await page.evaluate(() => {
       const all = [...document.querySelectorAll('.sign-panel__step')];
@@ -286,8 +286,8 @@ test('시작 화면도 문장을 순서대로 수어로 보여 준다', async ({
   await expect(page.locator('.sign-panel__step')).toHaveCount(4);
 
   const seen = new Set<number>();
-  for (let step = 0; step < 40; step += 1) {
-    await page.waitForTimeout(400);
+  for (let step = 0; step < 150; step += 1) {
+    await page.waitForTimeout(600);
     const index = await page.evaluate(() => {
       const all = [...document.querySelectorAll('.sign-panel__step')];
       return all.findIndex((dot) => dot.classList.contains('sign-panel__step--on')) + 1;
