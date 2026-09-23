@@ -1390,3 +1390,17 @@ html[data-contrast='high'] .vbtn--play {
     min-height: 52px;
   }
 }
+
+/* ---------- 지금 수어로 보여 주는 문장 ---------- */
+.screen-title--signing > span,
+.plain-list__item--signing,
+.question-official--signing > span,
+.question-sub--signing {
+  background: var(--primary-soft);
+  border-radius: 8px;
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+.scenario-card--signing {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}

@@ -47,7 +47,7 @@ export function QuestionScreen({
 }: Props) {
   const [showErrors, setShowErrors] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const { setPlaylist } = useSignVideo();
+  const { setPlaylist, isSigning } = useSignVideo();
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const module = findModule(question.moduleId);
   const canMarkUnknown = supportsUnknownFlag(question);
@@ -98,7 +98,12 @@ export function QuestionScreen({
           <span className="chip chip--muted">{positionLabel}</span>
         </div>
 
-        <h2 className="question-official" id={`${question.questionId}-label`} tabIndex={-1} ref={headingRef}>
+        <h2
+          className={`question-official${isSigning(question.officialText) ? ' question-official--signing' : ''}`}
+          id={`${question.questionId}-label`}
+          tabIndex={-1}
+          ref={headingRef}
+        >
           <span>{question.officialText}</span>
           <SignButton
             label={question.officialText}
@@ -109,7 +114,11 @@ export function QuestionScreen({
           />
         </h2>
 
-        {question.easyText && <p className="question-sub">{question.easyText}</p>}
+        {question.easyText && (
+          <p className={`question-sub${isSigning(question.easyText) ? ' question-sub--signing' : ''}`}>
+            {question.easyText}
+          </p>
+        )}
 
         <QuestionRenderer question={question} answer={answer} context={context} onChange={onChange} />
 

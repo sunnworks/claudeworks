@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { SignButton } from '../components/SignButton';
 import { useSignVideo } from '../components/SignVideoContext';
+import { useScreenPlaylist } from '../components/useScreenPlaylist';
 import { formatAnswer } from '../domain/answerFormat';
 import { visibleQuestionsOfModule } from '../domain/questionnaireEngine';
 import type { EvaluationContext } from '../domain/rules';
@@ -32,29 +32,26 @@ export function ReviewScreen({
   onFinish,
   onBack,
 }: Props) {
-  const { setPlaylist } = useSignVideo();
-
-  useEffect(() => {
-    setPlaylist([{ caption: CAPTION, kind: '안내', key: 'screen-review' }], 'screen-review');
-  }, [setPlaylist]);
+  const { isSigning } = useSignVideo();
+  const statusText =
+    incompleteCount > 0 ? `아직 답하지 않은 질문이 ${incompleteCount}개 있습니다.` : '모두 답했습니다.';
+  useScreenPlaylist('screen-review', [{ caption: CAPTION }, { caption: statusText }]);
 
   return (
     <div>
       <div className="card">
-        <h2 className="screen-title">
+        <h2 className={`screen-title${isSigning(CAPTION) ? ' screen-title--signing' : ''}`}>
           <span>답한 내용을 확인하세요</span>
           <SignButton label={CAPTION} kind="안내" variant="main" className="sign-btn sign-btn--main" />
         </h2>
 
-        {incompleteCount > 0 ? (
-          <p className="question-sub" aria-live="polite">
-            아직 답하지 않은 질문이 {incompleteCount}개 있습니다.
-          </p>
-        ) : (
-          <p className="question-sub" aria-live="polite">
-            모두 답했습니다.
-          </p>
-        )}
+        <p
+          className={`question-sub${isSigning(statusText) ? ' question-sub--signing' : ''}`}
+          aria-live="polite"
+        >
+          {statusText}
+          <SignButton label={statusText} kind="안내" className="sign-btn sign-btn--inline" />
+        </p>
       </div>
 
       {modules.map((module) => {

@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { SignButton } from '../components/SignButton';
 import { useSignVideo } from '../components/SignVideoContext';
+import { useScreenPlaylist } from '../components/useScreenPlaylist';
 
 interface Props {
   proxyWriting: boolean;
@@ -10,26 +10,34 @@ interface Props {
 }
 
 const CAPTION = '누가 작성하나요? 본인인가요, 다른 사람이 대신 쓰나요?';
+const SELF = '내가 직접 씁니다';
+const PROXY = '가족이나 도와주는 사람이 대신 씁니다';
 
 /** 작성자 확인. 의사소통 방법은 문진 안 SUP-05·SUP-06 에서 수어와 함께 묻는다. */
 export function WriterScreen({ proxyWriting, onProxyChange, onNext, onBack }: Props) {
-  const { setPlaylist } = useSignVideo();
-
-  useEffect(() => {
-    setPlaylist([{ caption: CAPTION, kind: '문항', key: 'screen-writer' }], 'screen-writer');
-  }, [setPlaylist]);
+  const { isSigning } = useSignVideo();
+  useScreenPlaylist('screen-writer', [
+    { caption: CAPTION, kind: '문항' },
+    { caption: SELF, kind: '선택지' },
+    { caption: PROXY, kind: '선택지' },
+  ]);
 
   return (
     <div>
       <div className="card">
-        <h2 className="screen-title">
+        <h2 className={`screen-title${isSigning(CAPTION) ? ' screen-title--signing' : ''}`}>
           <span>누가 작성하나요?</span>
           <SignButton label={CAPTION} kind="문항" variant="main" className="sign-btn sign-btn--main" />
         </h2>
 
         <div className="options" role="radiogroup" aria-label="작성자">
           <div className="option-row">
-            <label className={`option${!proxyWriting ? ' option--selected' : ''}`} htmlFor="writer-self">
+            <label
+              className={`option${!proxyWriting ? ' option--selected' : ''}${
+                isSigning(SELF) ? ' option--signing' : ''
+              }`}
+              htmlFor="writer-self"
+            >
               <input
                 id="writer-self"
                 type="radio"
@@ -38,7 +46,7 @@ export function WriterScreen({ proxyWriting, onProxyChange, onNext, onBack }: Pr
                 onChange={() => onProxyChange(false)}
               />
               <span className="option__body">
-                내가 직접 씁니다
+                {SELF}
                 {!proxyWriting && (
                   <span className="option__mark" aria-hidden="true">
                     ✔
@@ -46,11 +54,16 @@ export function WriterScreen({ proxyWriting, onProxyChange, onNext, onBack }: Pr
                 )}
               </span>
             </label>
-            <SignButton label="내가 직접 씁니다" className="sign-btn" />
+            <SignButton label={SELF} className="sign-btn" />
           </div>
 
           <div className="option-row">
-            <label className={`option${proxyWriting ? ' option--selected' : ''}`} htmlFor="writer-proxy">
+            <label
+              className={`option${proxyWriting ? ' option--selected' : ''}${
+                isSigning(PROXY) ? ' option--signing' : ''
+              }`}
+              htmlFor="writer-proxy"
+            >
               <input
                 id="writer-proxy"
                 type="radio"
@@ -59,7 +72,7 @@ export function WriterScreen({ proxyWriting, onProxyChange, onNext, onBack }: Pr
                 onChange={() => onProxyChange(true)}
               />
               <span className="option__body">
-                가족이나 도와주는 사람이 대신 씁니다
+                {PROXY}
                 {proxyWriting && (
                   <span className="option__mark" aria-hidden="true">
                     ✔
@@ -67,7 +80,7 @@ export function WriterScreen({ proxyWriting, onProxyChange, onNext, onBack }: Pr
                 )}
               </span>
             </label>
-            <SignButton label="가족이나 도와주는 사람이 대신 씁니다" className="sign-btn" />
+            <SignButton label={PROXY} className="sign-btn" />
           </div>
         </div>
       </div>

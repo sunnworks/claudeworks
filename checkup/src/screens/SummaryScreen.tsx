@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { SignButton } from '../components/SignButton';
 import { useSignVideo } from '../components/SignVideoContext';
+import { useScreenPlaylist } from '../components/useScreenPlaylist';
 import { formatAnswer } from '../domain/answerFormat';
 import { buildFacilityChecklist } from '../domain/facilityChecklist';
 import { visibleQuestionsOfModule } from '../domain/questionnaireEngine';
@@ -20,6 +20,7 @@ interface Props {
 }
 
 const CAPTION = '다 썼습니다. 이 화면을 인쇄해서 검진 날 가져가세요.';
+const SAVE_NOTE = '이 내용은 저장되지 않습니다. 인쇄하거나 화면을 검진기관에 보여 주세요.';
 
 function scoreLine(score: AnyScore): string {
   if (score.instrument === 'PHQ-9') return `총점 ${score.total} / ${score.maxTotal}`;
@@ -38,23 +39,29 @@ export function SummaryScreen({
   unknownQuestions,
   onRestart,
 }: Props) {
-  const { setPlaylist } = useSignVideo();
+  const { isSigning } = useSignVideo();
   const needsReview = scores.filter((score) => score.medicalReview);
   const facilityTasks = buildFacilityChecklist(context.answers);
 
-  useEffect(() => {
-    setPlaylist([{ caption: CAPTION, kind: '안내', key: 'screen-summary' }], 'screen-summary');
-  }, [setPlaylist]);
+  useScreenPlaylist('screen-summary', [
+    { caption: CAPTION },
+    { caption: SAVE_NOTE },
+    ...(facilityTasks.length > 0 ? [{ caption: '병원이 미리 준비할 것을 정리했습니다.' }] : []),
+    ...(unknownQuestions.length > 0
+      ? [{ caption: '잘 모르겠다고 한 질문입니다. 검진 날 의료진과 같이 확인하세요.' }]
+      : []),
+  ]);
 
   return (
     <div>
       <div className="card">
-        <h2 className="screen-title">
+        <h2 className={`screen-title${isSigning(CAPTION) ? ' screen-title--signing' : ''}`}>
           <span>다 썼습니다</span>
           <SignButton label={CAPTION} kind="안내" variant="main" className="sign-btn sign-btn--main" />
         </h2>
-        <p className="question-sub">
-          이 내용은 저장되지 않습니다. 인쇄하거나 화면을 검진기관에 보여 주세요. 창을 닫으면 사라집니다.
+        <p className={`question-sub${isSigning(SAVE_NOTE) ? ' question-sub--signing' : ''}`}>
+          {SAVE_NOTE}
+          <SignButton label={SAVE_NOTE} kind="안내" className="sign-btn sign-btn--inline" />
         </p>
 
         <table className="summary-table">

@@ -278,3 +278,40 @@ test('수어영상 풀에 mp4와 webm이 모두 들어 있다', async ({ page })
   expect(seen.size).toBeGreaterThanOrEqual(4);
   expect(seen.size).toBeLessThanOrEqual(8);
 });
+
+test('시작 화면도 문장을 순서대로 수어로 보여 준다', async ({ page }) => {
+  await page.goto('/');
+
+  // 제목 + 안내 3문장 = 네 단계
+  await expect(page.locator('.sign-panel__step')).toHaveCount(4);
+
+  const seen = new Set<number>();
+  for (let step = 0; step < 40; step += 1) {
+    await page.waitForTimeout(400);
+    const index = await page.evaluate(() => {
+      const all = [...document.querySelectorAll('.sign-panel__step')];
+      return all.findIndex((dot) => dot.classList.contains('sign-panel__step--on')) + 1;
+    });
+    seen.add(index);
+    if (index === 4) break;
+  }
+  expect([...seen].sort()).toEqual([1, 2, 3, 4]);
+
+  // 지금 보여 주는 문장이 화면에서도 강조된다
+  await expect(page.locator('.plain-list__item--signing, .screen-title--signing')).toHaveCount(1);
+});
+
+test('손 모양 버튼을 누르면 그 문장으로 건너뛰고 이어서 재생한다', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(600);
+
+  await page.getByRole('button', { name: /수어로 보기: 문장 옆 손 모양/ }).click();
+  await page.waitForTimeout(500);
+
+  const index = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('.sign-panel__step')];
+    return all.findIndex((dot) => dot.classList.contains('sign-panel__step--on')) + 1;
+  });
+  expect(index).toBe(3);
+  await expect(page.locator('.sign-panel__subtitle')).toContainText('문장 옆 손 모양');
+});

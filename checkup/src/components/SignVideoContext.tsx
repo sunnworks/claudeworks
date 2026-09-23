@@ -18,7 +18,11 @@ interface SignVideoContextValue {
   request: SignVideoRequest;
   /** 화면이 바뀔 때 순서대로 보여줄 목록을 넣는다. 첫 번째가 바로 재생된다. */
   setPlaylist: (items: SignVideoRequest[], playlistKey: string) => void;
-  /** 선택지·버튼의 수어영상을 즉시 재생한다(순서 재생은 잠시 멈춘다). */
+  /**
+   * 손 모양 버튼을 눌렀을 때 그 문장을 즉시 재생한다.
+   * 그 문장이 지금 순서 목록에 있으면 그 자리로 건너뛰어, 이어서 다음 문장으로 넘어간다.
+   * 목록에 없으면 그 문장만 한 번 재생하고 원래 자리로 돌아온다.
+   */
   play: (caption: string, kind?: SignKind, signAssetId?: string) => void;
   /** 영상이 끝났을 때 패널이 호출한다. 다음 순서로 넘어간다. */
   advance: () => void;
@@ -50,6 +54,10 @@ export function SignVideoProvider({ children }: { children: ReactNode }) {
   const [playlistKey, setPlaylistKey] = useState('intro');
   const [index, setIndex] = useState(0);
   const [oneOff, setOneOff] = useState<SignVideoRequest | undefined>();
+  // 같은 문장을 다시 눌렀을 때도 처음부터 재생되도록 하는 번호
+  const [manualVersion, setManualVersion] = useState(0);
+  // 손 모양 버튼으로 방금 고른 문장. 자동재생이 꺼져 있어도 이 문장만은 재생한다.
+  const [manualCaption, setManualCaption] = useState<string | undefined>();
   const [autoPlay, setAutoPlay] = useState(true);
   const [autoSequence, setAutoSequence] = useState(true);
   const [zoom, setZoom] = useState(false);
@@ -62,15 +70,29 @@ export function SignVideoProvider({ children }: { children: ReactNode }) {
       setPlaylistState(items);
       setIndex(0);
       setOneOff(undefined);
+      setManualVersion(0);
+      setManualCaption(undefined);
     },
     [playlistKey],
   );
 
-  const play = useCallback((caption: string, kind: SignKind = '선택지', signAssetId?: string) => {
-    setOneOff({ caption, kind, key: `${kind}-${caption}-${Date.now()}`, signAssetId, explicit: true });
-  }, []);
+  const play = useCallback(
+    (caption: string, kind: SignKind = '선택지', signAssetId?: string) => {
+      const found = playlist.findIndex((item) => item.caption === caption);
+      setManualVersion((previous) => previous + 1);
+      setManualCaption(caption);
+      if (found >= 0) {
+        setOneOff(undefined);
+        setIndex(found);
+        return;
+      }
+      setOneOff({ caption, kind, key: `${kind}-${caption}`, signAssetId, explicit: true });
+    },
+    [playlist],
+  );
 
   const advance = useCallback(() => {
+    setManualCaption(undefined);
     if (oneOff) {
       setOneOff(undefined);
       return;
@@ -79,7 +101,13 @@ export function SignVideoProvider({ children }: { children: ReactNode }) {
     setIndex((previous) => (previous + 1 < playlist.length ? previous + 1 : previous));
   }, [oneOff, autoSequence, autoPlay, playlist.length]);
 
-  const request = oneOff ?? playlist[Math.min(index, playlist.length - 1)] ?? INTRO;
+  const current = oneOff ?? playlist[Math.min(index, playlist.length - 1)] ?? INTRO;
+  // 손 모양 버튼을 누르면 같은 문장이라도 다시 재생되도록 번호를 붙인다.
+  const request: SignVideoRequest = {
+    ...current,
+    key: `${current.key}|${manualVersion}`,
+    explicit: current.caption === manualCaption,
+  };
 
   const isSigning = useCallback((caption: string) => request.caption === caption, [request.caption]);
 
@@ -100,7 +128,21 @@ export function SignVideoProvider({ children }: { children: ReactNode }) {
       showCaption,
       setShowCaption,
     }),
-    [request, setPlaylist, play, advance, isSigning, oneOff, index, playlist.length, autoPlay, autoSequence, zoom, showCaption],
+    [
+      request,
+      setPlaylist,
+      play,
+      advance,
+      isSigning,
+      oneOff,
+      index,
+      playlist.length,
+      autoPlay,
+      autoSequence,
+      zoom,
+      showCaption,
+      manualCaption,
+    ],
   );
 
   return <SignVideoCtx.Provider value={value}>{children}</SignVideoCtx.Provider>;
